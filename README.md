@@ -23,7 +23,7 @@
 - Response macros, events, logging, and caching hooks
 - Rate-limit response helper
 - OpenAPI / Swagger example payloads
-- Laravel 10, 11, and 12 compatible
+- Laravel 10, 11, 12, and 13 compatible
 - PHP 8.2+
 
 ---
@@ -31,7 +31,7 @@
 ## Requirements
 
 - PHP ^8.2
-- Laravel ^10.0 | ^11.0 | ^12.0
+- Laravel ^10.0 | ^11.0 | ^12.0 | ^13.0
 
 ---
 
