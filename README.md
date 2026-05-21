@@ -323,19 +323,6 @@ OpenApiExample::errorExample();
 
 ---
 
-## Publishing to Packagist
-
-1. Push to GitHub: `quonainejaz-official/smart-response`
-2. Submit repository URL at [packagist.org](https://packagist.org)
-3. Tag releases with semantic versioning: `v1.0.0`
-
-```bash
-git tag -a v1.0.0 -m "Initial release"
-git push origin v1.0.0
-```
-
----
-
 ## Testing
 
 ```bash
