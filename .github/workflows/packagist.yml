@@ -1,0 +1,13 @@
+name: Packagist
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  packagist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Packagist package update
+        run: curl -fsS -X POST --retry 3 "${{ secrets.PACKAGIST_UPDATE_URL }}"
