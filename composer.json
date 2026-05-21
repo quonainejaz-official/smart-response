@@ -1,0 +1,73 @@
+{
+    "name": "vendor/smart-response",
+    "version": "1.0.0",
+    "description": "Unified API and Web response handling for Laravel — detect JSON vs HTML and respond automatically from one controller.",
+    "keywords": [
+        "laravel",
+        "api",
+        "response",
+        "json",
+        "blade",
+        "inertia",
+        "livewire",
+        "smart-response"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "SmartResponse Contributors",
+            "email": "hello@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^10.0|^11.0|^12.0",
+        "illuminate/http": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/view": "^10.0|^11.0|^12.0",
+        "illuminate/pagination": "^10.0|^11.0|^12.0",
+        "illuminate/translation": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^2.0|^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0",
+        "phpstan/phpstan": "^1.10|^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vendor\\SmartResponse\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vendor\\SmartResponse\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vendor\\SmartResponse\\SmartResponseServiceProvider"
+            ],
+            "aliases": {
+                "SmartResponse": "Vendor\\SmartResponse\\Facades\\SmartResponse"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "analyse": "phpstan analyse"
+    }
+}
