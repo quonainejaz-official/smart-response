@@ -1,6 +1,5 @@
 {
     "name": "quonain/smart-response",
-    "version": "1.0.0",
     "description": "Unified API and Web response handling for Laravel — detect JSON vs HTML and respond automatically from one controller.",
     "keywords": [
         "laravel",
