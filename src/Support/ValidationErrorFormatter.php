@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Support;
+namespace Quonain\SmartResponse\Support;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Support\MessageBag;

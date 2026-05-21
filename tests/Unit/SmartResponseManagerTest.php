@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use Vendor\SmartResponse\Tests\TestCase;
+use Quonain\SmartResponse\Tests\TestCase;
 
 uses(TestCase::class);
 
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 it('returns json for api requests', function () {
     $request = Request::create('/users', 'GET', [], [], [], [

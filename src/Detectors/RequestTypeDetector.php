@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Detectors;
+namespace Quonain\SmartResponse\Detectors;
 
 use Illuminate\Http\Request;
-use Vendor\SmartResponse\Contracts\RequestDetectorInterface;
+use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
 
 final class RequestTypeDetector implements RequestDetectorInterface
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Exceptions;
+namespace Quonain\SmartResponse\Exceptions;
 
 use Exception;
 

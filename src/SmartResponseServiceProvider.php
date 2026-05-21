@@ -2,31 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse;
+namespace Quonain\SmartResponse;
 
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Routing\Registrar;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Support\ServiceProvider;
-use Vendor\SmartResponse\Builders\ApiResponseBuilder;
-use Vendor\SmartResponse\Builders\WebResponseBuilder;
-use Vendor\SmartResponse\Contracts\ApiResponseBuilderInterface;
-use Vendor\SmartResponse\Contracts\RequestDetectorInterface;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\Contracts\WebResponseBuilderInterface;
-use Vendor\SmartResponse\Detectors\RequestTypeDetector;
-use Vendor\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
-use Vendor\SmartResponse\Formatters\JsonApiFormatter;
-use Vendor\SmartResponse\Formatters\XmlApiFormatter;
-use Vendor\SmartResponse\Http\Middleware\SmartResponseMiddleware;
-use Vendor\SmartResponse\Macros\ResponseMacros;
-use Vendor\SmartResponse\Services\SmartResponseManager;
-use Vendor\SmartResponse\Support\InertiaAdapter;
-use Vendor\SmartResponse\Support\MessageTranslator;
-use Vendor\SmartResponse\Support\PaginationTransformer;
-use Vendor\SmartResponse\Support\RateLimitResponse;
-use Vendor\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Builders\ApiResponseBuilder;
+use Quonain\SmartResponse\Builders\WebResponseBuilder;
+use Quonain\SmartResponse\Contracts\ApiResponseBuilderInterface;
+use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\Contracts\WebResponseBuilderInterface;
+use Quonain\SmartResponse\Detectors\RequestTypeDetector;
+use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
+use Quonain\SmartResponse\Formatters\JsonApiFormatter;
+use Quonain\SmartResponse\Formatters\XmlApiFormatter;
+use Quonain\SmartResponse\Http\Middleware\SmartResponseMiddleware;
+use Quonain\SmartResponse\Macros\ResponseMacros;
+use Quonain\SmartResponse\Services\SmartResponseManager;
+use Quonain\SmartResponse\Support\InertiaAdapter;
+use Quonain\SmartResponse\Support\MessageTranslator;
+use Quonain\SmartResponse\Support\PaginationTransformer;
+use Quonain\SmartResponse\Support\RateLimitResponse;
+use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 
 final class SmartResponseServiceProvider extends ServiceProvider
 {
@@ -45,7 +45,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
             ], 'smart-response-config');
 
             $this->publishes([
-                __DIR__.'/../lang' => $this->app->langPath('vendor/smart-response'),
+                __DIR__.'/../lang' => $this->app->langPath('quonain/smart-response'),
             ], 'smart-response-lang');
         }
 

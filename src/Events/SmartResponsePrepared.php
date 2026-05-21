@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Events;
+namespace Quonain\SmartResponse\Events;
 
 use Symfony\Component\HttpFoundation\Response;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 final class SmartResponsePrepared
 {

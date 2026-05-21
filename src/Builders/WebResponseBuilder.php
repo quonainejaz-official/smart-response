@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Builders;
+namespace Quonain\SmartResponse\Builders;
 
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Vendor\SmartResponse\Contracts\WebResponseBuilderInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
-use Vendor\SmartResponse\Support\InertiaAdapter;
+use Quonain\SmartResponse\Contracts\WebResponseBuilderInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Support\InertiaAdapter;
 
 final class WebResponseBuilder implements WebResponseBuilderInterface
 {

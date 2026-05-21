@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Exceptions\Handler;
+namespace Quonain\SmartResponse\Exceptions\Handler;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -13,8 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
-use Vendor\SmartResponse\Contracts\RequestDetectorInterface;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
 
 /**
  * Register in your App\Exceptions\Handler or bootstrap/app.php exception handling.

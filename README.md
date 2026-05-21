@@ -1,8 +1,8 @@
 # SmartResponse
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/vendor/smart-response.svg)](https://packagist.org/packages/vendor/smart-response)
-[![License](https://img.shields.io/packagist/l/vendor/smart-response.svg)](https://packagist.org/packages/vendor/smart-response)
-[![PHP Version](https://img.shields.io/packagist/php-v/vendor/smart-response.svg)](https://packagist.org/packages/vendor/smart-response)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
+[![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
+[![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
 **SmartResponse** is a production-ready Laravel package that lets you return **API JSON** or **Blade web views** from the **same controller method** — automatically detecting the request type.
 
@@ -38,7 +38,7 @@
 ## Installation
 
 ```bash
-composer require vendor/smart-response
+composer require quonain/smart-response
 ```
 
 Laravel **auto-discovers** the service provider. No manual registration required.
@@ -62,7 +62,7 @@ php artisan vendor:publish --tag=smart-response-lang
 ### 1. Use the trait in your controller
 
 ```php
-use Vendor\SmartResponse\Traits\HasSmartResponse;
+use Quonain\SmartResponse\Traits\HasSmartResponse;
 
 class UserController extends Controller
 {
@@ -134,7 +134,7 @@ return $this->smartValidationError($validator->errors());
 ### Facade
 
 ```php
-use Vendor\SmartResponse\Facades\SmartResponse;
+use Quonain\SmartResponse\Facades\SmartResponse;
 
 return SmartResponse::success($data, 'Done');
 return SmartResponse::error('Failed', ['code' => 'X'], 400);
@@ -229,7 +229,7 @@ return $this->smartResponse(
 Register the handler for API requests in `bootstrap/app.php` (Laravel 11+) or your exception handler:
 
 ```php
-use Vendor\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
+use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
 
 ->withExceptions(function (Exceptions $exceptions) {
     $exceptions->render(function (Throwable $e, $request) {
@@ -303,8 +303,8 @@ Route::middleware('smart.response')->group(function () {
 Listen for lifecycle hooks:
 
 ```php
-use Vendor\SmartResponse\Events\SmartResponsePreparing;
-use Vendor\SmartResponse\Events\SmartResponsePrepared;
+use Quonain\SmartResponse\Events\SmartResponsePreparing;
+use Quonain\SmartResponse\Events\SmartResponsePrepared;
 
 Event::listen(SmartResponsePreparing::class, fn ($e) => /* ... */);
 Event::listen(SmartResponsePrepared::class, fn ($e) => /* ... */);
@@ -315,7 +315,7 @@ Event::listen(SmartResponsePrepared::class, fn ($e) => /* ... */);
 ## OpenAPI / Swagger
 
 ```php
-use Vendor\SmartResponse\Support\OpenApiExample;
+use Quonain\SmartResponse\Support\OpenApiExample;
 
 OpenApiExample::successExample();
 OpenApiExample::errorExample();
@@ -325,7 +325,7 @@ OpenApiExample::errorExample();
 
 ## Publishing to Packagist
 
-1. Push to GitHub: `your-org/smart-response`
+1. Push to GitHub: `quonainejaz-official/smart-response`
 2. Submit repository URL at [packagist.org](https://packagist.org)
 3. Tag releases with semantic versioning: `v1.0.0`
 

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Builders;
+namespace Quonain\SmartResponse\Builders;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Vendor\SmartResponse\Contracts\ApiResponseBuilderInterface;
-use Vendor\SmartResponse\Contracts\ResponseFormatterInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
-use Vendor\SmartResponse\Formatters\JsonApiFormatter;
-use Vendor\SmartResponse\Formatters\XmlApiFormatter;
+use Quonain\SmartResponse\Contracts\ApiResponseBuilderInterface;
+use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Formatters\JsonApiFormatter;
+use Quonain\SmartResponse\Formatters\XmlApiFormatter;
 
 final class ApiResponseBuilder implements ApiResponseBuilderInterface
 {

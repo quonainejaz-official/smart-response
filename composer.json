@@ -1,5 +1,5 @@
 {
-    "name": "vendor/smart-response",
+    "name": "quonain/smart-response",
     "version": "1.0.0",
     "description": "Unified API and Web response handling for Laravel — detect JSON vs HTML and respond automatically from one controller.",
     "keywords": [
@@ -16,8 +16,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "SmartResponse Contributors",
-            "email": "hello@example.com"
+            "name": "Quonain Ejaz",
+            "email": "quonainejaz-official@users.noreply.github.com"
         }
     ],
     "require": {
@@ -37,7 +37,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Vendor\\SmartResponse\\": "src/"
+            "Quonain\\SmartResponse\\": "src/"
         },
         "files": [
             "src/helpers.php"
@@ -45,16 +45,16 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Vendor\\SmartResponse\\Tests\\": "tests/"
+            "Quonain\\SmartResponse\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Vendor\\SmartResponse\\SmartResponseServiceProvider"
+                "Quonain\\SmartResponse\\SmartResponseServiceProvider"
             ],
             "aliases": {
-                "SmartResponse": "Vendor\\SmartResponse\\Facades\\SmartResponse"
+                "SmartResponse": "Quonain\\SmartResponse\\Facades\\SmartResponse"
             }
         }
     },

@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\UserResource;
-use Vendor\SmartResponse\Traits\HasSmartResponse;
+use Quonain\SmartResponse\Traits\HasSmartResponse;
 
 final class ExampleController extends Controller
 {

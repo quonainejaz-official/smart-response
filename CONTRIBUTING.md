@@ -5,7 +5,7 @@ Thank you for considering contributing to SmartResponse!
 ## Development setup
 
 ```bash
-git clone https://github.com/your-org/smart-response.git
+git clone https://github.com/quonainejaz-official/smart-response.git
 cd smart-response
 composer install
 composer test

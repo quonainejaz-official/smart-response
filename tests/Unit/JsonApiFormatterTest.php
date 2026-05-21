@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
-use Vendor\SmartResponse\Formatters\JsonApiFormatter;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Formatters\JsonApiFormatter;
 
 it('formats standardized api json structure', function () {
     $formatter = new JsonApiFormatter(require dirname(__DIR__, 2).'/config/smart-response.php');

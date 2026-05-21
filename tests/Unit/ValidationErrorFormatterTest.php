@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\MessageBag;
-use Vendor\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 
 it('formats message bag errors', function () {
     $formatter = new ValidationErrorFormatter();

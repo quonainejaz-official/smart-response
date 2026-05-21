@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Contracts;
+namespace Quonain\SmartResponse\Contracts;
 
 use Illuminate\Http\Request;
 

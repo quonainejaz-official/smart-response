@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Tests;
+namespace Quonain\SmartResponse\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
-use Vendor\SmartResponse\SmartResponseServiceProvider;
+use Quonain\SmartResponse\SmartResponseServiceProvider;
 
 abstract class TestCase extends Orchestra
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Support;
+namespace Quonain\SmartResponse\Support;
 
 use Illuminate\Http\Response;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 /**
  * Optional Inertia.js adapter. Enable in config when inertiajs/inertia-laravel is installed.

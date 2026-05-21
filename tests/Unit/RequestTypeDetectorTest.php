@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Http\Request;
-use Vendor\SmartResponse\Detectors\RequestTypeDetector;
+use Quonain\SmartResponse\Detectors\RequestTypeDetector;
 
 beforeEach(function () {
     $this->detector = new RequestTypeDetector(

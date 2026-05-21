@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Events;
+namespace Quonain\SmartResponse\Events;
 
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 final class SmartResponsePreparing
 {

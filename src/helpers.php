@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
-use Vendor\SmartResponse\Support\RateLimitResponse;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Support\RateLimitResponse;
 
 if (! function_exists('smart_response')) {
     /**

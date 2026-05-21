@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Http\Middleware;
+namespace Quonain\SmartResponse\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

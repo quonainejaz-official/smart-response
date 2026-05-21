@@ -72,7 +72,7 @@ return [
     */
     'inertia' => [
         'enabled' => false,
-        'adapter' => \Vendor\SmartResponse\Support\InertiaAdapter::class,
+        'adapter' => \Quonain\SmartResponse\Support\InertiaAdapter::class,
     ],
 
     /*

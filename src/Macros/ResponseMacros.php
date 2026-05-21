@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Macros;
+namespace Quonain\SmartResponse\Macros;
 
 use Illuminate\Http\JsonResponse;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 final class ResponseMacros
 {

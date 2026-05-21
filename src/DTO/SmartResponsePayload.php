@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\DTO;
+namespace Quonain\SmartResponse\DTO;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

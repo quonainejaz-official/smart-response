@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Support;
+namespace Quonain\SmartResponse\Support;
 
 /**
  * Swagger / OpenAPI example payloads for documentation generators.

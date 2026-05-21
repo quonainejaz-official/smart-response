@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Traits;
+namespace Quonain\SmartResponse\Traits;
 
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 trait HasSmartResponse
 {

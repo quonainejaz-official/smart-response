@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Services;
+namespace Quonain\SmartResponse\Services;
 
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
-use Vendor\SmartResponse\Builders\ApiResponseBuilder;
-use Vendor\SmartResponse\Builders\WebResponseBuilder;
-use Vendor\SmartResponse\Contracts\RequestDetectorInterface;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
-use Vendor\SmartResponse\Events\SmartResponsePrepared;
-use Vendor\SmartResponse\Events\SmartResponsePreparing;
-use Vendor\SmartResponse\Support\MessageTranslator;
-use Vendor\SmartResponse\Support\PaginationTransformer;
-use Vendor\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Builders\ApiResponseBuilder;
+use Quonain\SmartResponse\Builders\WebResponseBuilder;
+use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Events\SmartResponsePrepared;
+use Quonain\SmartResponse\Events\SmartResponsePreparing;
+use Quonain\SmartResponse\Support\MessageTranslator;
+use Quonain\SmartResponse\Support\PaginationTransformer;
+use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 
 final class SmartResponseManager implements SmartResponseManagerInterface
 {

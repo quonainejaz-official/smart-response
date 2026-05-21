@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Formatters;
+namespace Quonain\SmartResponse\Formatters;
 
 use SimpleXMLElement;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
-use Vendor\SmartResponse\Contracts\ResponseFormatterInterface;
-use Vendor\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
+use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 final class XmlApiFormatter implements ResponseFormatterInterface
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vendor\SmartResponse\Support;
+namespace Quonain\SmartResponse\Support;
 
 use Symfony\Component\HttpFoundation\Response;
-use Vendor\SmartResponse\Contracts\SmartResponseManagerInterface;
+use Quonain\SmartResponse\Contracts\SmartResponseManagerInterface;
 
 final class RateLimitResponse
 {
