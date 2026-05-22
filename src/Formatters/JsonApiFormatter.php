@@ -17,20 +17,26 @@ final class JsonApiFormatter implements ResponseFormatterInterface
 
     public function format(SmartResponsePayload $payload): BaseResponse
     {
-        $keys = $this->config['api'];
+        if ($payload->status === 204) {
+            $response = new JsonResponse(null, 204);
+        } else {
+            $keys = $this->config['api'];
 
-        $body = [
-            $keys['success_key'] => $payload->success,
-            $keys['message_key'] => $payload->message,
-            $keys['data_key'] => $payload->normalizedData(),
-            $keys['meta_key'] => (object) ($payload->meta ?: []),
-            $keys['errors_key'] => $payload->errors,
-        ];
+            $body = [
+                $keys['success_key'] => $payload->success,
+                $keys['message_key'] => $payload->message,
+                $keys['data_key'] => $payload->normalizedData(),
+                $keys['meta_key'] => (object) ($payload->meta ?: []),
+                $keys['errors_key'] => $payload->errors,
+            ];
 
-        $response = new JsonResponse($body, $payload->status);
+            $response = new JsonResponse($body, $payload->status);
+        }
 
         if ($payload->headers) {
-            $response->withHeaders($payload->headers);
+            foreach ($payload->headers as $name => $value) {
+                $response->headers->set($name, is_array($value) ? implode(', ', $value) : (string) $value);
+            }
         }
 
         return $response;

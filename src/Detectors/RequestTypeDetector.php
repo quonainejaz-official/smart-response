@@ -53,6 +53,12 @@ final class RequestTypeDetector implements RequestDetectorInterface
 
     public function expectsApi(Request $request): bool
     {
+        if ($this->config['detection']['bearer_as_api'] ?? false) {
+            if ($request->bearerToken() !== null) {
+                return true;
+            }
+        }
+
         if ($this->config['graphql']['enabled'] ?? false) {
             $graphqlAccept = $this->config['graphql']['accept'] ?? '';
             if (str_contains(strtolower($request->header('Accept', '')), strtolower($graphqlAccept))) {

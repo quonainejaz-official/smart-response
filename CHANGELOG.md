@@ -5,6 +5,25 @@ All notable changes to **SmartResponse** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-21
+
+### Added
+
+- HTTP shortcut helpers: `created()`, `noContent()`, `notFound()`, `unauthorized()`, `forbidden()`
+- Trait helpers: `smartCreated()`, `smartNoContent()`, `smartNotFound()`, etc.
+- Global helpers: `smart_created()`, `smart_not_found()`
+- Response macros: `response()->smartCreated()`, `response()->smartNotFound()`
+- API meta enrichment (timestamp, request ID, optional API version) via `MetaEnricher`
+- Bearer token requests auto-detected as API (`detection.bearer_as_api`)
+- Cursor pagination meta support
+- `Retry-After` header on rate-limit responses
+- Extra translation keys for common errors
+
+### Fixed
+
+- Custom response headers now apply correctly on JSON responses
+- `204 No Content` returns an empty body
+
 ## [1.0.1] - 2026-05-21
 
 ### Added

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Quonain\SmartResponse\Support;
 
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 
 final class PaginationTransformer
@@ -32,6 +34,13 @@ final class PaginationTransformer
             return [
                 'data' => $data->resolve(),
                 'meta' => $this->metaFromPaginator($data->resource),
+            ];
+        }
+
+        if ($data instanceof AbstractCursorPaginator) {
+            return [
+                'data' => $data->items(),
+                'meta' => $this->metaFromCursorPaginator($data),
             ];
         }
 
@@ -67,5 +76,19 @@ final class PaginationTransformer
         }
 
         return array_filter($meta, static fn ($value) => $value !== null);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function metaFromCursorPaginator(CursorPaginator $paginator): array
+    {
+        return array_filter([
+            'per_page' => $paginator->perPage(),
+            'path' => $paginator->path(),
+            'next_cursor' => $paginator->nextCursor()?->encode(),
+            'prev_cursor' => $paginator->previousCursor()?->encode(),
+            'has_more' => $paginator->hasMorePages(),
+        ], static fn ($value) => $value !== null);
     }
 }

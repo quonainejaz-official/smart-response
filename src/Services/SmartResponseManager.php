@@ -17,6 +17,7 @@ use Quonain\SmartResponse\DTO\SmartResponsePayload;
 use Quonain\SmartResponse\Events\SmartResponsePrepared;
 use Quonain\SmartResponse\Events\SmartResponsePreparing;
 use Quonain\SmartResponse\Support\MessageTranslator;
+use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 
@@ -29,6 +30,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         private readonly PaginationTransformer $pagination,
         private readonly ValidationErrorFormatter $validationFormatter,
         private readonly MessageTranslator $translator,
+        private readonly MetaEnricher $metaEnricher,
         private readonly ?CacheRepository $cache,
         private readonly ?Dispatcher $events,
         private readonly array $config,
@@ -43,6 +45,10 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         $payload = $this->applyTranslations($payload);
         $payload = $this->applyPagination($payload);
         $payload = $this->applyFormatDetection($payload, $request);
+
+        if ($this->detector->expectsApi($request)) {
+            $payload = $this->metaEnricher->enrich($payload, $request);
+        }
 
         $this->dispatchPreparing($payload);
 
@@ -108,6 +114,62 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         ));
     }
 
+    public function created(
+        mixed $data = null,
+        ?string $message = null,
+        array $meta = [],
+    ): Response {
+        return $this->success(
+            $data,
+            $message,
+            $meta,
+            (int) ($this->config['status_codes']['created'] ?? 201),
+        );
+    }
+
+    public function noContent(): Response
+    {
+        $status = (int) ($this->config['status_codes']['no_content'] ?? 204);
+
+        $request = request();
+
+        if ($request !== null && $this->detector->expectsApi($request)) {
+            return new Response('', $status, ['Content-Type' => 'application/json']);
+        }
+
+        return $this->respond(new SmartResponsePayload(
+            success: true,
+            status: $status,
+        ));
+    }
+
+    public function notFound(?string $message = null, mixed $errors = null): Response
+    {
+        return $this->error(
+            $message ?? 'Resource not found',
+            $errors,
+            (int) ($this->config['status_codes']['not_found'] ?? 404),
+        );
+    }
+
+    public function unauthorized(?string $message = null, mixed $errors = null): Response
+    {
+        return $this->error(
+            $message ?? 'Unauthorized',
+            $errors,
+            (int) ($this->config['status_codes']['unauthorized'] ?? 401),
+        );
+    }
+
+    public function forbidden(?string $message = null, mixed $errors = null): Response
+    {
+        return $this->error(
+            $message ?? 'Forbidden',
+            $errors,
+            (int) ($this->config['status_codes']['forbidden'] ?? 403),
+        );
+    }
+
     private function buildResponse(SmartResponsePayload $payload, Request $request): Response
     {
         if ($this->detector->expectsApi($request)) {
@@ -159,29 +221,9 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             return $payload;
         }
 
-        return new SmartResponsePayload(
-            request: $payload->request,
+        return $payload->replicate(
             data: $transformed['data'],
-            view: $payload->view,
-            viewData: $payload->viewData,
-            message: $payload->message,
-            success: $payload->success,
-            errors: $payload->errors,
             meta: array_merge($payload->meta, $transformed['meta']),
-            status: $payload->status,
-            redirect: $payload->redirect,
-            route: $payload->route,
-            routeParameters: $payload->routeParameters,
-            format: $payload->format,
-            locale: $payload->locale,
-            flash: $payload->flash,
-            toast: $payload->toast,
-            cacheKey: $payload->cacheKey,
-            cacheTtl: $payload->cacheTtl,
-            headers: $payload->headers,
-            inertiaComponent: $payload->inertiaComponent,
-            useInertia: $payload->useInertia,
-            useLivewire: $payload->useLivewire,
         );
     }
 
@@ -219,8 +261,17 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
     private function shouldUseCache(SmartResponsePayload $payload): bool
     {
+        $request = $payload->request;
+
+        if ($request === null || ! $this->detector->expectsApi($request)) {
+            return false;
+        }
+
+        if (strtoupper($request->method()) !== 'GET') {
+            return false;
+        }
+
         return ($this->config['cache']['enabled'] ?? false)
-            && $payload->cacheKey !== null
             && $this->cache !== null;
     }
 
@@ -255,13 +306,20 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
     private function cacheKey(SmartResponsePayload $payload): ?string
     {
-        if ($payload->cacheKey === null) {
-            return null;
+        $prefix = $this->config['cache']['prefix'] ?? 'smart_response';
+        $cacheKey = $payload->cacheKey;
+
+        if ($cacheKey === null) {
+            $request = $payload->request;
+
+            if ($request === null) {
+                return null;
+            }
+
+            $cacheKey = sha1($request->fullUrl().'|'.$request->header('Accept', ''));
         }
 
-        $prefix = $this->config['cache']['prefix'] ?? 'smart_response';
-
-        return "{$prefix}:{$payload->cacheKey}";
+        return "{$prefix}:{$cacheKey}";
     }
 
     private function logResponse(SmartResponsePayload $payload): void

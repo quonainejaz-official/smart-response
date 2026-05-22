@@ -31,4 +31,18 @@ interface SmartResponseManagerInterface
         ?string $message = null,
         int $status = 422,
     ): Response;
+
+    public function created(
+        mixed $data = null,
+        ?string $message = null,
+        array $meta = [],
+    ): Response;
+
+    public function noContent(): Response;
+
+    public function notFound(?string $message = null, mixed $errors = null): Response;
+
+    public function unauthorized(?string $message = null, mixed $errors = null): Response;
+
+    public function forbidden(?string $message = null, mixed $errors = null): Response;
 }

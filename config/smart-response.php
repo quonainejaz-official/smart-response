@@ -27,6 +27,22 @@ return [
         'xml_accept' => ['application/xml', 'text/xml'],
         'api_route_prefixes' => ['api'],
         'api_route_patterns' => ['api/*'],
+        'bearer_as_api' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Meta Enrichment
+    |--------------------------------------------------------------------------
+    */
+    'meta' => [
+        'enabled' => true,
+        'include_timestamp' => true,
+        'include_request_id' => true,
+        'request_id_header' => 'X-Request-Id',
+        'include_api_version' => false,
+        'api_version' => '1.0',
+        'api_version_header' => 'X-API-Version',
     ],
 
     /*
@@ -126,6 +142,7 @@ return [
     'rate_limit' => [
         'message' => 'Too many requests. Please try again later.',
         'status' => 429,
+        'retry_after_seconds' => 60,
     ],
 
     /*

@@ -14,14 +14,22 @@ final class RateLimitResponse
         private readonly array $config,
     ) {}
 
-    public function respond(?string $message = null): Response
+    public function respond(?string $message = null, ?int $retryAfter = null): Response
     {
         $rateLimit = $this->config['rate_limit'];
 
-        return $this->manager->error(
+        $response = $this->manager->error(
             $message ?? ($rateLimit['message'] ?? 'Too many requests'),
             null,
             (int) ($rateLimit['status'] ?? 429),
         );
+
+        $seconds = $retryAfter ?? ($rateLimit['retry_after_seconds'] ?? null);
+
+        if ($seconds !== null) {
+            $response->headers->set('Retry-After', (string) $seconds);
+        }
+
+        return $response;
     }
 }

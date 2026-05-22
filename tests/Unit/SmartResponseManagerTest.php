@@ -135,3 +135,32 @@ it('success helper returns standardized structure', function () {
         ->and($json['message'])->toBe('Done')
         ->and($json['data'])->toBe(['foo' => 'bar']);
 });
+
+it('auto-caches get api responses when cache is enabled', function () {
+    config()->set('smart-response.cache.enabled', true);
+    config()->set('smart-response.cache.store', 'array');
+
+    $request = Request::create('/api/cache-test?page=1', 'GET', [], [], [], [
+        'HTTP_ACCEPT' => 'application/json',
+    ]);
+
+    $manager = app(SmartResponseManagerInterface::class);
+
+    $first = $manager->respond(new SmartResponsePayload(
+        request: $request,
+        data: ['cached' => 1],
+        message: 'Cached response',
+    ));
+
+    $second = $manager->respond(new SmartResponsePayload(
+        request: $request,
+        data: ['cached' => 2],
+        message: 'New response',
+    ));
+
+    $firstJson = json_decode($first->getContent(), true);
+    $secondJson = json_decode($second->getContent(), true);
+
+    expect($firstJson['data'])->toBe(['cached' => 1])
+        ->and($secondJson['data'])->toBe(['cached' => 1]);
+});

@@ -37,7 +37,7 @@ final class WebResponseBuilder implements WebResponseBuilderInterface
 
         $data = $this->resolveViewData($payload);
 
-        return response()->view($viewName, $data, $payload->status);
+        return response()->view($viewName, $data, $payload->status, $payload->headers ?? []);
     }
 
     public function redirect(SmartResponsePayload $payload): RedirectResponse
@@ -48,6 +48,10 @@ final class WebResponseBuilder implements WebResponseBuilderInterface
 
         if ($payload->flash) {
             $this->applyFlash($response, $payload);
+        }
+
+        if ($payload->headers) {
+            $response->withHeaders($payload->headers);
         }
 
         return $response;

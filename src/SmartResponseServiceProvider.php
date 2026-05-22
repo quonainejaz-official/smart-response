@@ -24,6 +24,7 @@ use Quonain\SmartResponse\Macros\ResponseMacros;
 use Quonain\SmartResponse\Services\SmartResponseManager;
 use Quonain\SmartResponse\Support\InertiaAdapter;
 use Quonain\SmartResponse\Support\MessageTranslator;
+use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\RateLimitResponse;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
@@ -63,6 +64,9 @@ final class SmartResponseServiceProvider extends ServiceProvider
 
         $this->app->singleton(ValidationErrorFormatter::class);
         $this->app->singleton(PaginationTransformer::class);
+        $this->app->singleton(MetaEnricher::class, function ($app) {
+            return new MetaEnricher($app['config']->get('smart-response', []));
+        });
         $this->app->singleton(InertiaAdapter::class);
 
         $this->app->singleton(MessageTranslator::class, function ($app) {
@@ -113,6 +117,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
                 $app->make(PaginationTransformer::class),
                 $app->make(ValidationErrorFormatter::class),
                 $app->make(MessageTranslator::class),
+                $app->make(MetaEnricher::class),
                 $cache instanceof CacheRepository ? $cache : null,
                 $app->bound(Dispatcher::class) ? $app->make(Dispatcher::class) : null,
                 $config,

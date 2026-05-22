@@ -45,29 +45,64 @@ final class SmartResponsePayload
 
     public function withRequest(Request $request): self
     {
+        return $this->replicate(request: $request);
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function withMeta(array $meta): self
+    {
+        return $this->replicate(meta: array_merge($this->meta, $meta));
+    }
+
+    public function replicate(
+        ?Request $request = null,
+        mixed $data = null,
+        ?string $view = null,
+        ?array $viewData = null,
+        ?string $message = null,
+        ?bool $success = null,
+        mixed $errors = null,
+        ?array $meta = null,
+        ?int $status = null,
+        ?string $redirect = null,
+        ?string $route = null,
+        ?array $routeParameters = null,
+        ?string $format = null,
+        ?string $locale = null,
+        ?bool $flash = null,
+        ?bool $toast = null,
+        ?string $cacheKey = null,
+        ?int $cacheTtl = null,
+        ?array $headers = null,
+        ?string $inertiaComponent = null,
+        ?bool $useInertia = null,
+        ?bool $useLivewire = null,
+    ): self {
         return new self(
-            request: $request,
-            data: $this->data,
-            view: $this->view,
-            viewData: $this->viewData,
-            message: $this->message,
-            success: $this->success,
-            errors: $this->errors,
-            meta: $this->meta,
-            status: $this->status,
-            redirect: $this->redirect,
-            route: $this->route,
-            routeParameters: $this->routeParameters,
-            format: $this->format,
-            locale: $this->locale,
-            flash: $this->flash,
-            toast: $this->toast,
-            cacheKey: $this->cacheKey,
-            cacheTtl: $this->cacheTtl,
-            headers: $this->headers,
-            inertiaComponent: $this->inertiaComponent,
-            useInertia: $this->useInertia,
-            useLivewire: $this->useLivewire,
+            request: $request ?? $this->request,
+            data: $data ?? $this->data,
+            view: $view ?? $this->view,
+            viewData: $viewData ?? $this->viewData,
+            message: $message ?? $this->message,
+            success: $success ?? $this->success,
+            errors: $errors ?? $this->errors,
+            meta: $meta ?? $this->meta,
+            status: $status ?? $this->status,
+            redirect: $redirect ?? $this->redirect,
+            route: $route ?? $this->route,
+            routeParameters: $routeParameters ?? $this->routeParameters,
+            format: $format ?? $this->format,
+            locale: $locale ?? $this->locale,
+            flash: $flash ?? $this->flash,
+            toast: $toast ?? $this->toast,
+            cacheKey: $cacheKey ?? $this->cacheKey,
+            cacheTtl: $cacheTtl ?? $this->cacheTtl,
+            headers: $headers ?? $this->headers,
+            inertiaComponent: $inertiaComponent ?? $this->inertiaComponent,
+            useInertia: $useInertia ?? $this->useInertia,
+            useLivewire: $useLivewire ?? $this->useLivewire,
         );
     }
 

@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a production-ready Laravel package that lets you return **API JSON** or **Blade web views** from the **same controller method** — automatically detecting the request type.
+**SmartResponse** is a production-ready Laravel package that lets you return **API JSON** or **Blade web views** from the **same controller method** - automatically detecting the request type.
 
 ---
 
@@ -21,7 +21,12 @@
 - Optional **XML** responses
 - Multi-language messages
 - Response macros, events, logging, and caching hooks
-- Rate-limit response helper
+- Response macros (`response()->smart*`) for one-line usage
+- HTTP shortcuts: `created`, `noContent`, `notFound`, `unauthorized`, `forbidden`
+- Auto API meta: timestamp, request ID, optional API version
+- Bearer token requests treated as API automatically
+- Cursor pagination meta (`next_cursor`, `prev_cursor`, `has_more`)
+- Rate-limit response with `Retry-After` header
 - OpenAPI / Swagger example payloads
 - Laravel 10, 11, 12, and 13 compatible
 - PHP 8.2+
@@ -82,8 +87,8 @@ class UserController extends Controller
 }
 ```
 
-- **API request** (`Accept: application/json` or `/api/*` routes) → JSON
-- **Web request** → `users.index` Blade view with `$data`, `$message`, etc.
+- **API request** (`Accept: application/json` or `/api/*` routes) -> JSON
+- **Web request** -> `users.index` Blade view with `$data`, `$message`, etc.
 
 ### 2. API response format
 
@@ -120,6 +125,12 @@ return $this->smartResponse(
     format: null,
     flash: true,
     toast: false,
+    cacheKey: null,
+    cacheTtl: null,
+    headers: ['X-Smart-Response' => '1'],
+    inertiaComponent: null,
+    useInertia: false,
+    useLivewire: false,
 );
 ```
 
@@ -129,6 +140,11 @@ return $this->smartResponse(
 return $this->smartSuccess($users, 'Users loaded');
 return $this->smartError('Not allowed', null, 403);
 return $this->smartValidationError($validator->errors());
+return $this->smartCreated($user, 'User created');
+return $this->smartNoContent();
+return $this->smartNotFound('User not found');
+return $this->smartUnauthorized();
+return $this->smartForbidden('Insufficient permissions');
 ```
 
 ### Facade
@@ -165,7 +181,7 @@ return $this->smartResponse(
 
 ### Pagination
 
-Pass a paginator directly — meta is merged automatically:
+Pass a paginator directly - meta is merged automatically:
 
 ```php
 return $this->smartResponse(
@@ -200,18 +216,20 @@ return $this->smartResponse(
 ### Rate limiting
 
 ```php
-return smart_rate_limit_response();
+return smart_rate_limit_response(retryAfter: 120); // sets Retry-After: 120
 ```
 
 ### Response macro
 
 ```php
 return response()->smart($data, 'OK');
+return response()->smartSuccess($data, 'Saved');
+return response()->smartError('Failed', ['code' => 'X'], 400);
 ```
 
 ### Caching (API)
 
-Enable in config, then:
+Enable in config to auto-cache GET API responses (even without a manual cache key), then:
 
 ```php
 return $this->smartResponse(
@@ -221,6 +239,8 @@ return $this->smartResponse(
     cacheTtl: 120,
 );
 ```
+
+If `cacheKey` is not provided, SmartResponse generates a safe key from URL + `Accept` header.
 
 ---
 
@@ -247,7 +267,8 @@ Key options in `config/smart-response.php`:
 | Option | Description |
 |--------|-------------|
 | `api.*` | JSON response keys |
-| `detection.*` | How API vs web is detected |
+| `detection.*` | How API vs web is detected (`bearer_as_api` for Sanctum/Passport) |
+| `meta.*` | Auto-inject timestamp, request ID, API version into API `meta` |
 | `default_format` | `json` or `xml` |
 | `status_codes.*` | Default HTTP codes |
 | `web.*` | Flash / toast session keys |
@@ -334,28 +355,28 @@ composer test
 
 ## Package structure
 
-```
+```text
 smart-response/
-├── config/smart-response.php
-├── lang/en/messages.php
-├── src/
-│   ├── Contracts/
-│   ├── Detectors/
-│   ├── DTO/
-│   ├── Formatters/
-│   ├── Builders/
-│   ├── Services/
-│   ├── Traits/
-│   ├── Facades/
-│   ├── Events/
-│   ├── Exceptions/
-│   ├── Http/Middleware/
-│   ├── Macros/
-│   └── Support/
-├── tests/
-├── examples/
-├── composer.json
-└── README.md
+|-- config/smart-response.php
+|-- lang/en/messages.php
+|-- src/
+|   |-- Contracts/
+|   |-- Detectors/
+|   |-- DTO/
+|   |-- Formatters/
+|   |-- Builders/
+|   |-- Services/
+|   |-- Traits/
+|   |-- Facades/
+|   |-- Events/
+|   |-- Exceptions/
+|   |-- Http/Middleware/
+|   |-- Macros/
+|   `-- Support/
+|-- tests/
+|-- examples/
+|-- composer.json
+`-- README.md
 ```
 
 ---
@@ -374,4 +395,4 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-MIT © SmartResponse Contributors. See [LICENSE](LICENSE).
+MIT (c) SmartResponse Contributors. See [LICENSE](LICENSE).
