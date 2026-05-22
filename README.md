@@ -4,39 +4,54 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a production-ready Laravel package that lets you return **API JSON** or **Blade web views** from the **same controller method** - automatically detecting the request type.
+**SmartResponse** is a production-ready Laravel package that returns **API JSON** or **Blade / Inertia web views** from the **same controller method** — with automatic request-type detection.
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [How API vs Web is detected](#how-api-vs-web-is-detected)
+- [Usage](#usage)
+  - [Unified response](#unified-smartresponse)
+  - [HTTP shortcuts](#http-shortcuts)
+  - [Facade & helpers](#facade--global-helpers)
+  - [Response macros](#response-macros)
+  - [Pagination](#pagination)
+  - [API meta enrichment](#api-meta-enrichment)
+  - [Rate limiting](#rate-limiting)
+  - [Caching](#caching-api)
+- [Exception handling](#exception-handling-api)
+- [Configuration](#configuration)
+- [Middleware & events](#middleware)
+- [Testing](#testing)
+- [Changelog & license](#changelog)
 
 ---
 
 ## Features
 
-- Automatic API vs Web detection (`Accept`, `expectsJson()`, route prefixes)
-- Standardized JSON API envelope
-- Blade views with compact data injection
-- Validation error formatting
-- Exception handler integration for APIs
-- Pagination, Eloquent collections, and API Resources
-- Redirects with session flash and optional toast
-- Optional **Inertia.js** and **Livewire** support
-- Optional **XML** responses
-- Multi-language messages
-- Response macros, events, logging, and caching hooks
-- Response macros (`response()->smart*`) for one-line usage
-- HTTP shortcuts: `created`, `noContent`, `notFound`, `unauthorized`, `forbidden`
-- Auto API meta: timestamp, request ID, optional API version
-- Bearer token requests treated as API automatically
-- Cursor pagination meta (`next_cursor`, `prev_cursor`, `has_more`)
-- Rate-limit response with `Retry-After` header
-- OpenAPI / Swagger example payloads
-- Laravel 10, 11, 12, and 13 compatible
-- PHP 8.2+
+| Category | Capabilities |
+|----------|--------------|
+| **Detection** | `Accept` header, `expectsJson()`, `/api/*` routes, **Bearer tokens** (Sanctum / Passport) |
+| **API** | Standard JSON envelope, optional XML, validation errors, exception handler |
+| **Web** | Blade views, redirects, session flash, optional toast |
+| **Pagination** | Length-aware, simple, **cursor** paginators + API Resources |
+| **DX** | Trait, Facade, global helpers, `response()->smart*` macros |
+| **HTTP shortcuts** | `created`, `noContent`, `notFound`, `unauthorized`, `forbidden` |
+| **Meta** | Auto `timestamp`, `request_id`, optional `api_version` on API responses |
+| **Extras** | Inertia.js, Livewire, i18n, caching, logging, events, OpenAPI examples |
+| **Framework** | Laravel **10 · 11 · 12 · 13** · PHP **8.2+** |
 
 ---
 
 ## Requirements
 
-- PHP ^8.2
-- Laravel ^10.0 | ^11.0 | ^12.0 | ^13.0
+- PHP `^8.2`
+- Laravel `^10.0` · `^11.0` · `^12.0` · `^13.0`
 
 ---
 
@@ -46,27 +61,34 @@
 composer require quonain/smart-response
 ```
 
-Laravel **auto-discovers** the service provider. No manual registration required.
-
-### Publish configuration
+Or pin the latest 1.x release:
 
 ```bash
-php artisan vendor:publish --tag=smart-response-config
+composer require quonain/smart-response:^1.1
 ```
 
-### Publish translations
+Laravel **auto-discovers** the service provider — no manual registration.
+
+### Publish assets
 
 ```bash
+# Configuration
+php artisan vendor:publish --tag=smart-response-config
+
+# Translations
 php artisan vendor:publish --tag=smart-response-lang
 ```
+
+> **Packagist:** After a new release, open your [package page](https://packagist.org/packages/quonain/smart-response) and click **Update** if Composer does not see the latest tag yet. Enable the GitHub hook under package settings for automatic sync.
 
 ---
 
 ## Quick start
 
-### 1. Use the trait in your controller
+### 1. Add the trait
 
 ```php
+use Illuminate\Http\Request;
 use Quonain\SmartResponse\Traits\HasSmartResponse;
 
 class UserController extends Controller
@@ -81,26 +103,55 @@ class UserController extends Controller
             request: $request,
             data: UserResource::collection($users),
             view: 'users.index',
-            message: 'Users fetched successfully',
+            message: 'users.fetched', // translation key (optional)
         );
+    }
+
+    public function store(Request $request)
+    {
+        $user = User::create($request->validated());
+
+        return $this->smartCreated($user, 'users.created');
     }
 }
 ```
 
-- **API request** (`Accept: application/json` or `/api/*` routes) -> JSON
-- **Web request** -> `users.index` Blade view with `$data`, `$message`, etc.
+| Request type | Result |
+|--------------|--------|
+| API (`Accept: application/json`, `/api/*`, Bearer token, …) | Standard JSON |
+| Web (`text/html`, normal browser) | Blade view `users.index` with `$data`, `$message`, … |
 
-### 2. API response format
+### 2. Default JSON shape
 
 ```json
 {
   "success": true,
   "message": "Users fetched successfully",
   "data": [],
-  "meta": {},
+  "meta": {
+    "timestamp": "2026-05-21T12:00:00+00:00",
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "current_page": 1,
+    "per_page": 15,
+    "total": 100
+  },
   "errors": null
 }
 ```
+
+---
+
+## How API vs Web is detected
+
+SmartResponse treats a request as **API** when any of these match (configurable in `config/smart-response.php`):
+
+1. `Accept` contains `application/json` or `application/vnd.api+json`
+2. `Accept` contains `application/xml` or `text/xml`
+3. Route matches `api/*` or configured prefixes (`api` by default)
+4. Laravel `expectsJson()` is true (AJAX, etc.)
+5. **`Authorization: Bearer …` is present** (`detection.bearer_as_api` — ideal for Sanctum / Passport SPA or mobile apps)
+
+Otherwise the request is handled as **Web** (view or redirect).
 
 ---
 
@@ -117,57 +168,158 @@ return $this->smartResponse(
     message: 'Success',
     success: true,
     errors: null,
-    meta: ['version' => '1.0'],
+    meta: ['custom' => 'value'],
     status: 200,
-    redirect: null,
-    route: 'users.index',
+    route: 'users.index',       // web redirect
     routeParameters: [],
-    format: null,
+    format: null,               // auto: json | xml
     flash: true,
     toast: false,
     cacheKey: null,
     cacheTtl: null,
-    headers: ['X-Smart-Response' => '1'],
-    inertiaComponent: null,
+    headers: ['X-Custom' => '1'],
+    inertiaComponent: 'Users/Index',
     useInertia: false,
     useLivewire: false,
 );
 ```
 
-### Success / error helpers
+### HTTP shortcuts
+
+| Trait method | Facade / Manager | Status | Use case |
+|--------------|------------------|--------|----------|
+| `smartSuccess()` | `SmartResponse::success()` | 200 | OK with data |
+| `smartCreated()` | `SmartResponse::created()` | 201 | Resource created |
+| `smartNoContent()` | `SmartResponse::noContent()` | 204 | Delete / empty OK |
+| `smartError()` | `SmartResponse::error()` | 4xx/5xx | Generic error |
+| `smartNotFound()` | `SmartResponse::notFound()` | 404 | Missing resource |
+| `smartUnauthorized()` | `SmartResponse::unauthorized()` | 401 | Not logged in |
+| `smartForbidden()` | `SmartResponse::forbidden()` | 403 | No permission |
+| `smartValidationError()` | `SmartResponse::validationError()` | 422 | Form / API validation |
 
 ```php
 return $this->smartSuccess($users, 'Users loaded');
-return $this->smartError('Not allowed', null, 403);
-return $this->smartValidationError($validator->errors());
-return $this->smartCreated($user, 'User created');
+return $this->smartCreated($user, 'users.created');
 return $this->smartNoContent();
-return $this->smartNotFound('User not found');
+return $this->smartNotFound('error.not_found');
 return $this->smartUnauthorized();
-return $this->smartForbidden('Insufficient permissions');
+return $this->smartForbidden('error.forbidden');
+return $this->smartValidationError($validator->errors());
 ```
 
-### Facade
+### Facade & global helpers
 
 ```php
 use Quonain\SmartResponse\Facades\SmartResponse;
 
-return SmartResponse::success($data, 'Done');
-return SmartResponse::error('Failed', ['code' => 'X'], 400);
+SmartResponse::success($data, 'Done');
+SmartResponse::created($data, 'Created');
+SmartResponse::notFound('Not found');
+
+// Global helpers (no trait required)
+smart_response(request: $request, data: $users, view: 'users.index');
+smart_created($user, 'users.created');
+smart_not_found('error.not_found');
+smart_rate_limit_response(retryAfter: 60);
 ```
 
-### Global helper
+### Response macros
 
 ```php
-return smart_response(
+response()->smart($data, 'OK');
+response()->smartSuccess($data, 'Saved');
+response()->smartError('Failed', ['code' => 'X'], 400);
+response()->smartCreated($data, 'Created');
+response()->smartNotFound('Not found');
+```
+
+### Pagination
+
+**Length-aware** — pass a paginator; meta keys are merged automatically:
+
+```php
+return $this->smartResponse(
     request: $request,
-    data: $users,
+    data: User::paginate(20),
     view: 'users.index',
-    message: 'OK',
 );
 ```
 
-### Redirect (web) with flash + toast
+**Cursor** — works with `cursorPaginate()`:
+
+```php
+return $this->smartResponse(
+    request: $request,
+    data: User::orderBy('id')->cursorPaginate(15),
+);
+```
+
+Meta includes: `per_page`, `path`, `next_cursor`, `prev_cursor`, `has_more`.
+
+### API Resources & XML
+
+```php
+// API Resource collection
+return $this->smartResponse(
+    request: $request,
+    data: UserResource::collection($users),
+    view: 'users.index',
+);
+
+// Force or auto-detect XML
+return $this->smartResponse(request: $request, data: $users, format: 'xml');
+```
+
+### API meta enrichment
+
+Enabled by default (`meta.enabled` in config). Every API response can include:
+
+| Meta key | Source |
+|----------|--------|
+| `timestamp` | Current time (ISO 8601) |
+| `request_id` | `X-Request-Id` header or auto UUID |
+| `api_version` | `X-API-Version` header or `meta.api_version` config |
+
+```php
+// config/smart-response.php
+'meta' => [
+    'enabled' => true,
+    'include_timestamp' => true,
+    'include_request_id' => true,
+    'request_id_header' => 'X-Request-Id',
+    'include_api_version' => true,
+    'api_version' => '1.0',
+],
+```
+
+### Rate limiting
+
+Returns a standard error JSON with **`Retry-After`** header:
+
+```php
+// Uses config defaults (429 + retry_after_seconds)
+return smart_rate_limit_response();
+
+// Custom message and seconds
+return smart_rate_limit_response('Slow down', 120);
+```
+
+### Caching (API)
+
+Enable in config, then cache GET API responses:
+
+```php
+return $this->smartResponse(
+    request: $request,
+    data: $expensiveData,
+    cacheKey: 'users.index',
+    cacheTtl: 120,
+);
+```
+
+Without `cacheKey`, a hash of the full URL + `Accept` header is used.
+
+### Web redirect with flash & toast
 
 ```php
 return $this->smartResponse(
@@ -179,74 +331,11 @@ return $this->smartResponse(
 );
 ```
 
-### Pagination
-
-Pass a paginator directly - meta is merged automatically:
-
-```php
-return $this->smartResponse(
-    request: $request,
-    data: User::paginate(20),
-    view: 'users.index',
-);
-```
-
-### API Resources & collections
-
-```php
-return $this->smartResponse(
-    request: $request,
-    data: UserResource::collection($users),
-    view: 'users.index',
-);
-```
-
-### XML responses
-
-Clients sending `Accept: application/xml` receive XML automatically, or force format:
-
-```php
-return $this->smartResponse(
-    request: $request,
-    data: $users,
-    format: 'xml',
-);
-```
-
-### Rate limiting
-
-```php
-return smart_rate_limit_response(retryAfter: 120); // sets Retry-After: 120
-```
-
-### Response macro
-
-```php
-return response()->smart($data, 'OK');
-return response()->smartSuccess($data, 'Saved');
-return response()->smartError('Failed', ['code' => 'X'], 400);
-```
-
-### Caching (API)
-
-Enable in config to auto-cache GET API responses (even without a manual cache key), then:
-
-```php
-return $this->smartResponse(
-    request: $request,
-    data: $expensiveData,
-    cacheKey: 'users.index',
-    cacheTtl: 120,
-);
-```
-
-If `cacheKey` is not provided, SmartResponse generates a safe key from URL + `Accept` header.
-
 ---
 
 ## Exception handling (API)
 
-Register the handler for API requests in `bootstrap/app.php` (Laravel 11+) or your exception handler:
+Register in `bootstrap/app.php` (Laravel 11+):
 
 ```php
 use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
@@ -258,37 +347,39 @@ use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
 })
 ```
 
+API requests receive the same JSON envelope; web requests fall through to Laravel’s default handling.
+
 ---
 
 ## Configuration
 
-Key options in `config/smart-response.php`:
+Publish `config/smart-response.php` and adjust:
 
-| Option | Description |
-|--------|-------------|
-| `api.*` | JSON response keys |
-| `detection.*` | How API vs web is detected (`bearer_as_api` for Sanctum/Passport) |
-| `meta.*` | Auto-inject timestamp, request ID, API version into API `meta` |
+| Key | Description |
+|-----|-------------|
+| `api.*` | JSON keys: `success`, `message`, `data`, `meta`, `errors` |
+| `detection.*` | JSON/XML accepts, route prefixes, **`bearer_as_api`** |
+| `meta.*` | Timestamp, request ID, API version injection |
 | `default_format` | `json` or `xml` |
-| `status_codes.*` | Default HTTP codes |
-| `web.*` | Flash / toast session keys |
-| `inertia.enabled` | Enable Inertia adapter |
-| `locale.enabled` | Translate messages via lang files |
+| `status_codes.*` | Defaults for 200, 201, 204, 401, 403, 404, 422, 429, 500 |
+| `web.*` | Flash / toast session keys, default redirect route |
+| `inertia.enabled` | Inertia.js adapter |
+| `livewire.enabled` | Livewire hooks |
+| `locale.enabled` | Translate message keys via lang files |
+| `cache.enabled` | Cache GET API responses |
 | `logging.enabled` | Log each response |
-| `cache.enabled` | Cache API responses |
-| `events.enabled` | Dispatch lifecycle events |
+| `events.enabled` | `SmartResponsePreparing` / `SmartResponsePrepared` |
+| `rate_limit.*` | 429 message and `retry_after_seconds` |
+| `graphql.enabled` | GraphQL response `Accept` detection |
 
 ### Multi-language messages
 
-Use translation keys as messages:
-
 ```php
-return $this->smartResponse(
-    message: 'users.fetched', // resolves smart-response::messages.users.fetched
-);
+return $this->smartResponse(message: 'users.fetched');
+// → lang/vendor/smart-response/en/messages.php
 ```
 
-Publish lang files and edit `lang/vendor/smart-response/en/messages.php`.
+Built-in keys include: `users.fetched`, `users.created`, `error.not_found`, `error.unauthorized`, `error.forbidden`, `error.rate_limit`, and more.
 
 ### Inertia.js
 
@@ -296,7 +387,6 @@ Publish lang files and edit `lang/vendor/smart-response/en/messages.php`.
 // config/smart-response.php
 'inertia' => ['enabled' => true],
 
-// controller
 return $this->smartResponse(
     request: $request,
     data: $users,
@@ -309,7 +399,7 @@ return $this->smartResponse(
 
 ## Middleware
 
-Optional middleware alias: `smart.response`
+Alias: `smart.response` (enabled by default)
 
 ```php
 Route::middleware('smart.response')->group(function () {
@@ -317,23 +407,17 @@ Route::middleware('smart.response')->group(function () {
 });
 ```
 
----
-
-## Events
-
-Listen for lifecycle hooks:
+### Events
 
 ```php
 use Quonain\SmartResponse\Events\SmartResponsePreparing;
 use Quonain\SmartResponse\Events\SmartResponsePrepared;
 
-Event::listen(SmartResponsePreparing::class, fn ($e) => /* ... */);
-Event::listen(SmartResponsePrepared::class, fn ($e) => /* ... */);
+Event::listen(SmartResponsePreparing::class, fn ($e) => /* mutate payload */);
+Event::listen(SmartResponsePrepared::class, fn ($e) => /* inspect response */);
 ```
 
----
-
-## OpenAPI / Swagger
+### OpenAPI / Swagger
 
 ```php
 use Quonain\SmartResponse\Support\OpenApiExample;
@@ -357,27 +441,32 @@ composer test
 
 ```text
 smart-response/
-|-- config/smart-response.php
-|-- lang/en/messages.php
-|-- src/
-|   |-- Contracts/
-|   |-- Detectors/
-|   |-- DTO/
-|   |-- Formatters/
-|   |-- Builders/
-|   |-- Services/
-|   |-- Traits/
-|   |-- Facades/
-|   |-- Events/
-|   |-- Exceptions/
-|   |-- Http/Middleware/
-|   |-- Macros/
-|   `-- Support/
-|-- tests/
-|-- examples/
-|-- composer.json
-`-- README.md
+├── config/smart-response.php
+├── lang/en/messages.php
+├── src/
+│   ├── Contracts/
+│   ├── Detectors/          # API vs Web detection
+│   ├── DTO/
+│   ├── Formatters/         # JSON, XML
+│   ├── Builders/
+│   ├── Services/
+│   ├── Traits/             # HasSmartResponse
+│   ├── Facades/
+│   ├── Events/
+│   ├── Exceptions/
+│   ├── Http/Middleware/
+│   ├── Macros/
+│   └── Support/            # MetaEnricher, Pagination, i18n, …
+├── tests/
+├── examples/
+└── README.md
 ```
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history (`1.1.0` — HTTP shortcuts, meta enrichment, cursor pagination, Bearer detection).
 
 ---
 
@@ -387,12 +476,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md).
-
----
-
 ## License
 
-MIT (c) SmartResponse Contributors. See [LICENSE](LICENSE).
+MIT © [Quonain Ejaz](https://github.com/quonainejaz-official). See [LICENSE](LICENSE).
