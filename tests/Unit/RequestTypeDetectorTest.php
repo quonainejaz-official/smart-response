@@ -72,6 +72,15 @@ it('supports protocol route suffixes', function () {
     expect($this->detector->getPreferredFormat($request))->toBe('graphql');
 });
 
+it('treats an explicit soap suffix as an api request', function () {
+    $request = Request::create('/users.soap', 'GET', [], [], [], [
+        'HTTP_ACCEPT' => 'text/html',
+    ]);
+
+    expect($this->detector->expectsApi($request))->toBeTrue()
+        ->and($this->detector->getPreferredFormat($request))->toBe('soap');
+});
+
 it('ignores unsupported explicit formats', function () {
     $request = Request::create('/users?format=unknown', 'GET', [], [], [], [
         'HTTP_ACCEPT' => 'application/json',
