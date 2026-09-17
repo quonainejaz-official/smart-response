@@ -29,6 +29,21 @@ final class Response
     public function json(): string { return json_encode($this->body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES); }
     public function content(): string { return is_string($this->body) ? $this->body : $this->json(); }
 
+    public function withStatus(int $status): self { return new self($this->body, $status, $this->headers); }
+
+    public function withBody(mixed $body): self { return new self($body, $this->status, $this->headers); }
+
+    public function withHeader(string $name, string $value): self
+    {
+        return new self($this->body, $this->status, [...$this->headers, $name => $value]);
+    }
+
+    /** @param array<string, string> $headers */
+    public function withHeaders(array $headers): self
+    {
+        return new self($this->body, $this->status, [...$this->headers, ...$headers]);
+    }
+
     /** @return array{body: array<string, mixed>|string|null, status: int, headers: array<string, string>} */
     public function toArray(): array
     {

@@ -22,6 +22,8 @@ use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 use Quonain\SmartResponse\Support\SmartResponseBuilder;
 use Quonain\SmartResponse\Support\CachedResponse;
+use Quonain\SmartResponse\Http\Client\OutboundClient;
+use Quonain\SmartResponse\Http\Client\OutboundRequest;
 
 final class SmartResponseManager implements SmartResponseManagerInterface
 {
@@ -35,12 +37,14 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         private readonly MetaEnricher $metaEnricher,
         private readonly ?CacheRepository $cache,
         private readonly ?Dispatcher $events,
+        private readonly OutboundClient $outboundClient,
         /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
     public function respond(SmartResponsePayload $payload, ?Request $request = null): Response
     {
+        $startedAt = microtime(true);
         $request ??= $payload->request ?? request();
 
         $payload = $payload->withRequest($request);
@@ -60,13 +64,16 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             $cached = $this->getCachedResponse($payload);
 
             if ($cached !== null) {
+                $cached->headers->set('X-Cache', 'HIT');
                 return $cached;
             }
         }
 
         $response = $this->buildResponse($payload, $request);
 
-        $this->logResponse($payload);
+        $this->applyCacheHeaders($response);
+
+        $this->logResponse($payload, $request, $startedAt, $response);
         $this->dispatchPrepared($payload, $response);
         $this->storeCachedResponse($payload, $response);
 
@@ -378,6 +385,11 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         return "{$prefix}:{$cacheKey}";
     }
 
+    public function request(string $provider): OutboundRequest
+    {
+        return $this->outboundClient->request($provider);
+    }
+
     /** @return list<int> */
     private function cacheableStatuses(): array
     {
@@ -397,7 +409,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             || ($this->config['meta']['include_request_id'] ?? true);
     }
 
-    private function logResponse(SmartResponsePayload $payload): void
+    private function logResponse(SmartResponsePayload $payload, Request $request, float $startedAt, Response $response): void
     {
         if (! ($this->config['logging']['enabled'] ?? false)) {
             return;
@@ -407,11 +419,28 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             $this->config['logging']['level'] ?? 'info',
             'SmartResponse',
             [
+                'request_id' => $request->header((string) ($this->config['meta']['request_id_header'] ?? 'X-Request-Id')),
+                'trace_id' => $request->header('X-Trace-Id') ?? $request->header('traceparent'),
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+                'format' => $payload->format,
                 'success' => $payload->success,
                 'status' => $payload->status,
                 'message' => $payload->message,
+                'duration_ms' => round((microtime(true) - $startedAt) * 1000, 2),
+                'cache' => $response->headers->get('X-Cache', 'BYPASS'),
+                'error_code' => is_array($payload->errors) ? ($payload->errors['error_code'] ?? null) : null,
             ],
         );
+    }
+
+    private function applyCacheHeaders(Response $response): void
+    {
+        if (! (($this->config['cache']['headers'] ?? true) || ($this->config['cache']['etag'] ?? true))) return;
+        $content = $response->getContent() ?: '';
+        if ($this->config['cache']['etag'] ?? true) $response->headers->set('ETag', '"'.hash('sha256', $content).'"');
+        if ($this->config['cache']['last_modified'] ?? true) $response->headers->set('Last-Modified', gmdate('D, d M Y H:i:s').' GMT');
+        if ($this->config['cache']['headers'] ?? true) $response->headers->set('X-Cache', 'MISS');
     }
 
     private function dispatchPreparing(SmartResponsePayload $payload): void

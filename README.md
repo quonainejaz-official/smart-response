@@ -4,7 +4,24 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a framework-agnostic PHP response core with a full Laravel integration. Plain PHP and CodeIgniter applications can use the zero-dependency core; Laravel applications retain the complete response pipeline: REST JSON, legacy JSON, XML, SOAP, GraphQL, Blade, Inertia, WebSocket, gRPC host output, and webhook payloads.
+**SmartResponse** is a PHP response library for standardizing and transforming application and REST API responses. It provides a zero-dependency core for plain PHP and framework adapters for Laravel, with JSON, XML, legacy API, and web response support where your application needs it.
+
+Install it with Composer:
+
+```bash
+composer require quonain/smart-response
+```
+
+The smallest framework-agnostic response looks like this:
+
+```php
+$response = (new \Quonain\SmartResponse\Core\SmartResponse())
+    ->success(['id' => 1], 'User loaded');
+
+echo $response->content();
+```
+
+Use the Laravel integration when you want one controller API for REST JSON, legacy JSON, XML, Blade, Inertia, and other supported adapters.
 
 Current release line: `1.2.0` (see `Quonain\\SmartResponse\\Core\\Version::CURRENT`).
 
@@ -146,6 +163,7 @@ See the complete capability inventory and implementation boundaries in [features
 ## Table of contents
 
 - [Features](#features)
+- [Documentation](#documentation)
 - [Read this before using SmartResponse](#read-this-before-using-smartresponse)
 - [Current release scope](#what-the-current-release-covers)
 - [Requirements](#requirements)
@@ -191,6 +209,8 @@ SmartResponse includes these features in the current codebase:
 
 - PHP `^8.2`
 - Laravel `^10.0` · `^11.0` · `^12.0` · `^13.0`
+
+The core response value object does not require Laravel. Laravel-only features such as Blade views, middleware, facades, macros, and service-provider integration require the corresponding Laravel application components.
 
 ---
 
@@ -649,6 +669,9 @@ OpenApiExample::errorExample();
 ```bash
 composer install
 composer test
+composer analyse
+composer validate --strict
+composer audit
 ```
 
 Check the local runtime before enabling optional protocol integrations:
@@ -686,9 +709,27 @@ smart-response/
 
 ---
 
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Installation](docs/installation.md)
+- [Basic usage](docs/basic-usage.md)
+- [Response formats](docs/responses.md)
+- [JSON responses](docs/json.md)
+- [XML responses](docs/xml.md)
+- [Legacy API compatibility](docs/legacy.md)
+- [Request detection and format selection](docs/content-negotiation.md)
+- [Customization and extension](docs/customization.md)
+- [Framework integration](docs/framework-integration.md)
+- [Architecture](docs/architecture.md)
+- [Migration guide](docs/migration.md)
+- [FAQ](docs/faq.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Search intent coverage](docs/search-intent.md)
+
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history (`1.1.0` — HTTP shortcuts, meta enrichment, cursor pagination, Bearer detection).
+See [CHANGELOG.md](CHANGELOG.md) for version history and the current `1.2.0` release notes.
 
 ---
 
@@ -701,3 +742,33 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT © [Quonain Ejaz](https://github.com/quonainejaz-official). See [LICENSE](LICENSE).
+
+## Outbound API clients
+
+Configure providers in `config/smart-response.php` and use the same facade for outbound calls:
+
+```php
+'http' => ['providers' => [
+    'github' => [
+        'base_url' => env('GITHUB_API_URL', 'https://api.github.com'),
+        'auth' => ['type' => 'bearer', 'token' => env('GITHUB_TOKEN')],
+    ],
+]],
+```
+
+```php
+$response = SmartResponse::request('github')
+    ->get('/users')
+    ->query(['page' => 1])
+    ->headers(['Accept' => 'application/vnd.github+json'])
+    ->retry(3)
+    ->send();
+
+$users = $response->decoded();
+```
+
+The client supports GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD, JSON/form/multipart bodies, bearer/API-key/basic authentication, timeouts, retries with exponential backoff, response decoding, DTO mapping, host allow-lists, and response-size limits. Configure `http.max_response_bytes` and provider `allowed_hosts` for production deployments.
+
+## Structured response telemetry
+
+When `logging.enabled` is enabled, each response emits structured lifecycle fields including request/trace IDs, method, URL, negotiated format, status, duration, cache state and error code. Sensitive header names listed in `logging.redact` are never intended to be recorded by application hooks.

@@ -1,20 +1,36 @@
 {
     "name": "quonain/smart-response",
-    "description": "Framework-agnostic PHP response core with a full Laravel integration.",
+    "description": "PHP response library for standardizing REST/API responses across JSON, XML, legacy contracts, and Laravel web responses.",
     "keywords": [
         "php",
+        "php-library",
         "framework-agnostic",
+        "api",
+        "api-response",
+        "rest-api",
+        "response",
+        "response-formatter",
+        "json",
+        "json-api",
+        "xml",
+        "http",
+        "legacy-api",
+        "content-negotiation",
+        "composer",
+        "packagist",
         "codeigniter",
         "laravel",
-        "api",
-        "response",
-        "json",
         "blade",
         "inertia",
         "livewire",
         "smart-response"
     ],
     "type": "library",
+    "homepage": "https://github.com/quonainejaz-official/smart-response",
+    "support": {
+        "issues": "https://github.com/quonainejaz-official/smart-response/issues",
+        "source": "https://github.com/quonainejaz-official/smart-response"
+    },
     "license": "MIT",
     "authors": [
         {

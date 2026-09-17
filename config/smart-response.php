@@ -143,6 +143,16 @@ return [
         'enabled' => false,
         'channel' => null,
         'level' => 'info',
+        'redact' => ['authorization', 'cookie', 'set-cookie', 'password', 'token', 'secret', 'api-key'],
+        'sample_body' => false,
+    ],
+
+    /* Named outbound API providers. Credentials should come from env/config. */
+    'http' => [
+        'providers' => [],
+        'max_response_bytes' => 10485760,
+        'max_redirects' => 3,
+        'circuit_breaker' => ['enabled' => false, 'failures' => 5, 'cooldown_seconds' => 30],
     ],
 
     /*
@@ -160,6 +170,9 @@ return [
         'cache_authenticated' => false,
         'vary_headers' => ['Accept'],
         'cacheable_statuses' => [200],
+        'etag' => true,
+        'last_modified' => true,
+        'headers' => true,
     ],
 
     /*

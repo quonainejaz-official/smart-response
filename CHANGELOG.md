@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Framework-agnostic core, safe caching, rate limiting, and automated releases
 
+### Changed
+
+- Improved Composer metadata and package positioning for PHP response and API searches
+- Added capability-focused documentation, search-intent coverage, and open-source community files
+- Expanded CI validation across PHP 8.2, 8.3, and 8.4 with Composer validation and security auditing
+
 ## [1.2.0] - 2026-09-17
 
 ### Added
