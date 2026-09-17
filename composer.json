@@ -1,17 +1,36 @@
 {
     "name": "quonain/smart-response",
-    "description": "Unified API and Web response handling for Laravel with modern and legacy API response formats.",
+    "description": "PHP response library for standardizing REST/API responses across JSON, XML, legacy contracts, and Laravel web responses.",
     "keywords": [
-        "laravel",
+        "php",
+        "php-library",
+        "framework-agnostic",
         "api",
+        "api-response",
+        "rest-api",
         "response",
+        "response-formatter",
         "json",
+        "json-api",
+        "xml",
+        "http",
+        "legacy-api",
+        "content-negotiation",
+        "composer",
+        "packagist",
+        "codeigniter",
+        "laravel",
         "blade",
         "inertia",
         "livewire",
         "smart-response"
     ],
     "type": "library",
+    "homepage": "https://github.com/quonainejaz-official/smart-response",
+    "support": {
+        "issues": "https://github.com/quonainejaz-official/smart-response/issues",
+        "source": "https://github.com/quonainejaz-official/smart-response"
+    },
     "license": "MIT",
     "authors": [
         {
@@ -20,13 +39,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/view": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/pagination": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/translation": "^10.0|^11.0|^12.0|^13.0"
+        "php": "^8.2"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
@@ -35,6 +48,12 @@
         "phpstan/phpstan": "^1.10|^2.0"
     },
     "suggest": {
+        "illuminate/contracts": "Required by the Laravel integration; Laravel installs this automatically.",
+        "illuminate/http": "Required by the Laravel integration; Laravel installs this automatically.",
+        "illuminate/support": "Required by the Laravel integration; Laravel installs this automatically.",
+        "illuminate/view": "Required by the Laravel integration; Laravel installs this automatically.",
+        "illuminate/pagination": "Required by the Laravel integration; Laravel installs this automatically.",
+        "illuminate/translation": "Required by the Laravel integration; Laravel installs this automatically.",
         "cboden/ratchet": "Compatible WebSocket runtime for Runtime\\WebSocket\\WebSocketServer",
         "ext-soap": "Required for Runtime\\Soap\\SoapServerAdapter",
         "ext-grpc": "Optional PHP gRPC client support"
@@ -72,6 +91,7 @@
     },
     "scripts": {
         "test": "pest",
-        "analyse": "phpstan analyse"
+        "analyse": "phpstan analyse",
+        "release": "php tools/release.php"
     }
 }

@@ -1,0 +1,566 @@
+From 7a9d9b4868d84e1a1d8f7e8abfb4fe4b6f974370 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 17 Sep 2026 11:02:01 +0200
+Subject: [PATCH] Add multi-protocol response engines
+
+---
+ README.md                               | 47 ++++++++++++++++++++++++
+ composer.json                           |  2 +-
+ config/smart-response.php               | 15 +++++++-
+ phpstan.neon                            |  1 -
+ src/Builders/ApiResponseBuilder.php     |  9 +++++
+ src/Formatters/GraphQLApiFormatter.php  | 47 ++++++++++++++++++++++++
+ src/Formatters/LegacyApiFormatter.php   | 44 +++++++++++++++++++++++
+ src/Formatters/SoapApiFormatter.php     | 48 +++++++++++++++++++++++++
+ src/SmartResponseServiceProvider.php    | 13 +++++++
+ src/Support/GrpcResponse.php            | 23 ++++++++++++
+ src/Support/WebSocketMessage.php        | 28 +++++++++++++++
+ src/Support/WebhookPayload.php          | 21 +++++++++++
+ tests/Unit/LegacyApiFormatterTest.php   | 30 ++++++++++++++++
+ tests/Unit/ProtocolSupportTest.php      | 35 ++++++++++++++++++
+ tests/Unit/SmartResponseManagerTest.php | 20 +++++++++++
+ 15 files changed, 380 insertions(+), 3 deletions(-)
+ create mode 100644 src/Formatters/GraphQLApiFormatter.php
+ create mode 100644 src/Formatters/LegacyApiFormatter.php
+ create mode 100644 src/Formatters/SoapApiFormatter.php
+ create mode 100644 src/Support/GrpcResponse.php
+ create mode 100644 src/Support/WebSocketMessage.php
+ create mode 100644 src/Support/WebhookPayload.php
+ create mode 100644 tests/Unit/LegacyApiFormatterTest.php
+ create mode 100644 tests/Unit/ProtocolSupportTest.php
+
+diff --git a/README.md b/README.md
+index b805415..f87eb01 100644
+--- a/README.md
++++ b/README.md
+@@ -139,6 +139,53 @@ class UserController extends Controller
+ }
+ ```
+ 
++### Legacy API responses
++
++Existing clients can opt into a legacy envelope per response by setting
++`format: 'legacy'`. The modern envelope remains the default.
++
++```php
++return $this->smartResponse(
++    request: $request,
++    data: $user,
++    message: 'User loaded',
++    format: 'legacy',
++);
++```
++
++The default legacy shape is `status`, `message`, `data`, and `errors`. To match
++an existing contract, publish the config and change `smart-response.legacy.keys`.
++
++### Protocol engines
++
++The same payload can be selected for additional API protocols:
++
++```php
++return $this->smartResponse(request: $request, data: $user, format: 'graphql');
++return $this->smartResponse(request: $request, data: $user, format: 'soap');
++```
++
++`graphql` returns the standard GraphQL `{ data, errors }` envelope.
++`soap` returns a SOAP 1.1 XML envelope. Both are opt-in and preserve the
++existing JSON default.
++
++For transports that are not ordinary HTTP responses, use the built-in
++transport-neutral value objects and pass them to your chosen runtime:
++
++```php
++$grpc = new \Quonain\SmartResponse\Support\GrpcResponse(data: $user, message: 'Loaded');
++$socket = new \Quonain\SmartResponse\Support\WebSocketMessage(data: $user, event: 'user.loaded');
++$webhook = \Quonain\SmartResponse\Support\WebhookPayload::create(
++    event: 'user.created', data: $user, secret: config('services.partner.secret'),
++);
++```
++
++`GrpcResponse::toArray()` is ready for a protobuf/gRPC adapter, while
++`WebSocketMessage::encode()` can be sent through Reverb, Echo, or another
++WebSocket server. `WebhookPayload` creates a JSON-safe event body and an
++optional HMAC-SHA256 signature. The library does not force a specific gRPC,
++WebSocket, or HTTP client dependency on applications.
++
+ ---
+ 
+ ## How API vs Web is detected
+diff --git a/composer.json b/composer.json
+index c251cd0..f90f988 100644
+--- a/composer.json
++++ b/composer.json
+@@ -1,6 +1,6 @@
+ {
+     "name": "quonain/smart-response",
+-    "description": "Unified API and Web response handling for Laravel — detect JSON vs HTML and respond automatically from one controller.",
++    "description": "Unified API and Web response handling for Laravel with modern and legacy API response formats.",
+     "keywords": [
+         "laravel",
+         "api",
+diff --git a/config/smart-response.php b/config/smart-response.php
+index f5d34ce..ef464fc 100644
+--- a/config/smart-response.php
++++ b/config/smart-response.php
+@@ -49,10 +49,23 @@ return [
+     |--------------------------------------------------------------------------
+     | Response Formats
+     |--------------------------------------------------------------------------
+-    | Supported: json, xml
++    | Supported: json, xml, legacy, graphql, soap
+     */
+     'default_format' => 'json',
+ 
++    /*
++    | Legacy API response shape (selected with format: 'legacy').
++    | Set custom key names when integrating an existing API contract.
++    */
++    'legacy' => [
++        'keys' => [
++            'status' => 'status',
++            'message' => 'message',
++            'data' => 'data',
++            'errors' => 'errors',
++        ],
++    ],
++
+     /*
+     |--------------------------------------------------------------------------
+     | HTTP Status Codes
+diff --git a/phpstan.neon b/phpstan.neon
+index 4ba4231..6e451fa 100644
+--- a/phpstan.neon
++++ b/phpstan.neon
+@@ -2,4 +2,3 @@ parameters:
+     level: 6
+     paths:
+         - src
+-    checkMissingIterableValueType: false
+diff --git a/src/Builders/ApiResponseBuilder.php b/src/Builders/ApiResponseBuilder.php
+index 0ef3986..8b59081 100644
+--- a/src/Builders/ApiResponseBuilder.php
++++ b/src/Builders/ApiResponseBuilder.php
+@@ -11,12 +11,18 @@ use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
+ use Quonain\SmartResponse\DTO\SmartResponsePayload;
+ use Quonain\SmartResponse\Formatters\JsonApiFormatter;
+ use Quonain\SmartResponse\Formatters\XmlApiFormatter;
++use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
++use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
++use Quonain\SmartResponse\Formatters\SoapApiFormatter;
+ 
+ final class ApiResponseBuilder implements ApiResponseBuilderInterface
+ {
+     public function __construct(
+         private readonly JsonApiFormatter $jsonFormatter,
+         private readonly XmlApiFormatter $xmlFormatter,
++        private readonly LegacyApiFormatter $legacyFormatter,
++        private readonly GraphQLApiFormatter $graphqlFormatter,
++        private readonly SoapApiFormatter $soapFormatter,
+         private readonly array $config,
+     ) {}
+ 
+@@ -41,6 +47,9 @@ final class ApiResponseBuilder implements ApiResponseBuilderInterface
+ 
+         return match ($format) {
+             'xml' => $this->xmlFormatter,
++            'legacy' => $this->legacyFormatter,
++            'graphql' => $this->graphqlFormatter,
++            'soap' => $this->soapFormatter,
+             default => $this->jsonFormatter,
+         };
+     }
+diff --git a/src/Formatters/GraphQLApiFormatter.php b/src/Formatters/GraphQLApiFormatter.php
+new file mode 100644
+index 0000000..3d49b39
+--- /dev/null
++++ b/src/Formatters/GraphQLApiFormatter.php
+@@ -0,0 +1,47 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Formatters;
++
++use Illuminate\Http\JsonResponse;
++use Symfony\Component\HttpFoundation\Response as BaseResponse;
++use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
++use Quonain\SmartResponse\DTO\SmartResponsePayload;
++
++/** Formats a payload according to the GraphQL response envelope. */
++final class GraphQLApiFormatter implements ResponseFormatterInterface
++{
++    public function format(SmartResponsePayload $payload): BaseResponse
++    {
++        $body = $payload->success
++            ? ['data' => $payload->normalizedData()]
++            : ['data' => null, 'errors' => $this->errors($payload)];
++
++        if ($payload->success && $payload->errors !== null) {
++            $body['errors'] = $this->errors($payload);
++        }
++
++        $response = new JsonResponse($body, $payload->status);
++        $response->headers->set('Content-Type', 'application/graphql-response+json');
++
++        foreach ($payload->headers ?? [] as $name => $value) {
++            $response->headers->set($name, is_array($value) ? implode(', ', $value) : (string) $value);
++        }
++
++        return $response;
++    }
++
++    private function errors(SmartResponsePayload $payload): array
++    {
++        $errors = $payload->errors ?? $payload->message ?? 'Request failed';
++
++        if (! is_array($errors)) {
++            return [['message' => (string) $errors]];
++        }
++
++        return array_is_list($errors)
++            ? array_map(static fn (mixed $error): array => is_array($error) ? $error : ['message' => (string) $error], $errors)
++            : [['message' => $payload->message ?? 'Request failed', 'extensions' => ['details' => $errors]]];
++    }
++}
+diff --git a/src/Formatters/LegacyApiFormatter.php b/src/Formatters/LegacyApiFormatter.php
+new file mode 100644
+index 0000000..172d5a6
+--- /dev/null
++++ b/src/Formatters/LegacyApiFormatter.php
+@@ -0,0 +1,44 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Formatters;
++
++use Illuminate\Http\JsonResponse;
++use Symfony\Component\HttpFoundation\Response as BaseResponse;
++use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
++use Quonain\SmartResponse\DTO\SmartResponsePayload;
++
++/**
++ * Formats responses for APIs that pre-date SmartResponse's envelope.
++ *
++ * The shape is intentionally configurable because "legacy" APIs rarely
++ * share one standard. Defaults preserve the common status/message/data form.
++ */
++final class LegacyApiFormatter implements ResponseFormatterInterface
++{
++    public function __construct(private readonly array $config) {}
++
++    public function format(SmartResponsePayload $payload): BaseResponse
++    {
++        if ($payload->status === 204) {
++            return new JsonResponse(null, 204);
++        }
++
++        $keys = $this->config['legacy']['keys'] ?? [];
++        $body = [
++            $keys['status'] ?? 'status' => $payload->success,
++            $keys['message'] ?? 'message' => $payload->message,
++            $keys['data'] ?? 'data' => $payload->normalizedData(),
++            $keys['errors'] ?? 'errors' => $payload->errors,
++        ];
++
++        $response = new JsonResponse($body, $payload->status);
++
++        foreach ($payload->headers ?? [] as $name => $value) {
++            $response->headers->set($name, is_array($value) ? implode(', ', $value) : (string) $value);
++        }
++
++        return $response;
++    }
++}
+diff --git a/src/Formatters/SoapApiFormatter.php b/src/Formatters/SoapApiFormatter.php
+new file mode 100644
+index 0000000..f2e01a4
+--- /dev/null
++++ b/src/Formatters/SoapApiFormatter.php
+@@ -0,0 +1,48 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Formatters;
++
++use SimpleXMLElement;
++use Symfony\Component\HttpFoundation\Response;
++use Symfony\Component\HttpFoundation\Response as BaseResponse;
++use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
++use Quonain\SmartResponse\DTO\SmartResponsePayload;
++
++/** Formats a payload inside a SOAP 1.1 envelope. */
++final class SoapApiFormatter implements ResponseFormatterInterface
++{
++    public function format(SmartResponsePayload $payload): BaseResponse
++    {
++        $xml = new SimpleXMLElement(
++            '<?xml version="1.0" encoding="UTF-8"?>'.
++            '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body/></soap:Envelope>'
++        );
++        $body = $xml->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;
++        $response = $body->addChild($payload->success ? 'SmartResponse' : 'SmartResponseFault');
++        $this->add($response, 'success', $payload->success);
++        $this->add($response, 'message', $payload->message);
++        $this->add($response, 'data', $payload->normalizedData());
++        $this->add($response, 'meta', $payload->meta);
++        $this->add($response, 'errors', $payload->errors);
++
++        return new Response($xml->asXML(), $payload->status, [
++            'Content-Type' => 'text/xml; charset=UTF-8',
++            ...($payload->headers ?? []),
++        ]);
++    }
++
++    private function add(SimpleXMLElement $parent, string $name, mixed $value): void
++    {
++        if (is_array($value)) {
++            $node = $parent->addChild($name);
++            foreach ($value as $key => $item) {
++                $this->add($node, is_numeric($key) ? 'item' : (string) $key, $item);
++            }
++            return;
++        }
++
++        $parent->addChild($name, htmlspecialchars((string) ($value ?? ''), ENT_XML1, 'UTF-8'));
++    }
++}
+diff --git a/src/SmartResponseServiceProvider.php b/src/SmartResponseServiceProvider.php
+index d25e08d..dd9d56a 100644
+--- a/src/SmartResponseServiceProvider.php
++++ b/src/SmartResponseServiceProvider.php
+@@ -19,6 +19,9 @@ use Quonain\SmartResponse\Detectors\RequestTypeDetector;
+ use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
+ use Quonain\SmartResponse\Formatters\JsonApiFormatter;
+ use Quonain\SmartResponse\Formatters\XmlApiFormatter;
++use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
++use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
++use Quonain\SmartResponse\Formatters\SoapApiFormatter;
+ use Quonain\SmartResponse\Http\Middleware\SmartResponseMiddleware;
+ use Quonain\SmartResponse\Macros\ResponseMacros;
+ use Quonain\SmartResponse\Services\SmartResponseManager;
+@@ -84,11 +87,21 @@ final class SmartResponseServiceProvider extends ServiceProvider
+             return new XmlApiFormatter($app['config']->get('smart-response', []));
+         });
+ 
++        $this->app->singleton(LegacyApiFormatter::class, function ($app) {
++            return new LegacyApiFormatter($app['config']->get('smart-response', []));
++        });
++
++        $this->app->singleton(GraphQLApiFormatter::class);
++        $this->app->singleton(SoapApiFormatter::class);
++
+         $this->app->singleton(ApiResponseBuilderInterface::class, ApiResponseBuilder::class);
+         $this->app->singleton(ApiResponseBuilder::class, function ($app) {
+             return new ApiResponseBuilder(
+                 $app->make(JsonApiFormatter::class),
+                 $app->make(XmlApiFormatter::class),
++                $app->make(LegacyApiFormatter::class),
++                $app->make(GraphQLApiFormatter::class),
++                $app->make(SoapApiFormatter::class),
+                 $app['config']->get('smart-response', []),
+             );
+         });
+diff --git a/src/Support/GrpcResponse.php b/src/Support/GrpcResponse.php
+new file mode 100644
+index 0000000..ce4a39c
+--- /dev/null
++++ b/src/Support/GrpcResponse.php
+@@ -0,0 +1,23 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Support;
++
++/** Transport-neutral gRPC response value object; map it in any gRPC server adapter. */
++final class GrpcResponse
++{
++    public function __construct(
++        public readonly mixed $data = null,
++        public readonly ?string $message = null,
++        public readonly bool $success = true,
++        public readonly mixed $errors = null,
++        public readonly array $meta = [],
++        public readonly int $status = 0,
++    ) {}
++
++    public function toArray(): array
++    {
++        return ['success' => $this->success, 'message' => $this->message, 'data' => $this->data, 'meta' => $this->meta, 'errors' => $this->errors];
++    }
++}
+diff --git a/src/Support/WebSocketMessage.php b/src/Support/WebSocketMessage.php
+new file mode 100644
+index 0000000..4b791dc
+--- /dev/null
++++ b/src/Support/WebSocketMessage.php
+@@ -0,0 +1,28 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Support;
++
++/** Transport-neutral WebSocket message; send encode() through Laravel Reverb, Echo, or another server. */
++final class WebSocketMessage
++{
++    public function __construct(
++        public readonly mixed $data = null,
++        public readonly ?string $message = null,
++        public readonly bool $success = true,
++        public readonly mixed $errors = null,
++        public readonly array $meta = [],
++        public readonly ?string $event = null,
++    ) {}
++
++    public function toArray(): array
++    {
++        return ['success' => $this->success, 'message' => $this->message, 'data' => $this->data, 'meta' => $this->meta, 'errors' => $this->errors, 'event' => $this->event];
++    }
++
++    public function encode(): string
++    {
++        return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
++    }
++}
+diff --git a/src/Support/WebhookPayload.php b/src/Support/WebhookPayload.php
+new file mode 100644
+index 0000000..fa0e6be
+--- /dev/null
++++ b/src/Support/WebhookPayload.php
+@@ -0,0 +1,21 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Quonain\SmartResponse\Support;
++
++/** Creates signed webhook bodies without coupling the package to a HTTP client. */
++final class WebhookPayload
++{
++    public static function create(string $event, mixed $data = null, array $meta = [], ?string $secret = null): array
++    {
++        $body = ['event' => $event, 'data' => $data, 'meta' => $meta, 'timestamp' => time()];
++        $encoded = json_encode($body, JSON_THROW_ON_ERROR);
++
++        if ($secret !== null) {
++            $body['signature'] = hash_hmac('sha256', $encoded, $secret);
++        }
++
++        return $body;
++    }
++}
+diff --git a/tests/Unit/LegacyApiFormatterTest.php b/tests/Unit/LegacyApiFormatterTest.php
+new file mode 100644
+index 0000000..1805f05
+--- /dev/null
++++ b/tests/Unit/LegacyApiFormatterTest.php
+@@ -0,0 +1,30 @@
++<?php
++
++declare(strict_types=1);
++
++use Quonain\SmartResponse\DTO\SmartResponsePayload;
++use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
++
++it('formats a legacy api response without changing the modern envelope', function () {
++    $config = require dirname(__DIR__, 2).'/config/smart-response.php';
++    $response = (new LegacyApiFormatter($config))->format(new SmartResponsePayload(
++        data: ['id' => 1], message: 'Loaded', success: true, status: 200,
++    ));
++
++    expect($response->getData(true))->toBe([
++        'status' => true, 'message' => 'Loaded', 'data' => ['id' => 1], 'errors' => null,
++    ]);
++});
++
++it('supports custom legacy keys', function () {
++    $config = require dirname(__DIR__, 2).'/config/smart-response.php';
++    $config['legacy']['keys'] = [
++        'status' => 'ok', 'message' => 'msg', 'data' => 'result', 'errors' => 'problems',
++    ];
++
++    $json = (new LegacyApiFormatter($config))->format(new SmartResponsePayload(
++        data: ['id' => 1], success: true, status: 200,
++    ))->getData(true);
++
++    expect($json)->toHaveKey('ok')->toHaveKey('msg')->toHaveKey('result')->toHaveKey('problems');
++});
+diff --git a/tests/Unit/ProtocolSupportTest.php b/tests/Unit/ProtocolSupportTest.php
+new file mode 100644
+index 0000000..38dc686
+--- /dev/null
++++ b/tests/Unit/ProtocolSupportTest.php
+@@ -0,0 +1,35 @@
++<?php
++
++declare(strict_types=1);
++
++use Quonain\SmartResponse\DTO\SmartResponsePayload;
++use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
++use Quonain\SmartResponse\Formatters\SoapApiFormatter;
++use Quonain\SmartResponse\Support\GrpcResponse;
++use Quonain\SmartResponse\Support\WebhookPayload;
++use Quonain\SmartResponse\Support\WebSocketMessage;
++
++it('formats graphql responses', function () {
++    $response = (new GraphQLApiFormatter())->format(new SmartResponsePayload(data: ['id' => 1]));
++
++    expect($response->getData(true))->toBe(['data' => ['id' => 1]])
++        ->and($response->headers->get('Content-Type'))->toContain('application/graphql-response+json');
++});
++
++it('formats soap responses', function () {
++    $response = (new SoapApiFormatter())->format(new SmartResponsePayload(data: ['id' => 1]));
++
++    expect($response->getContent())->toContain('Envelope')
++        ->and($response->getContent())->toContain('data')
++        ->and($response->headers->get('Content-Type'))->toContain('text/xml');
++});
++
++it('provides transport-neutral grpc, websocket, and webhook payloads', function () {
++    $grpc = new GrpcResponse(data: ['id' => 1]);
++    $socket = new WebSocketMessage(data: ['id' => 1], event: 'user.loaded');
++    $webhook = WebhookPayload::create('user.loaded', ['id' => 1], secret: 'secret');
++
++    expect($grpc->toArray()['data'])->toBe(['id' => 1])
++        ->and(json_decode($socket->encode(), true)['event'])->toBe('user.loaded')
++        ->and($webhook)->toHaveKey('signature');
++});
+diff --git a/tests/Unit/SmartResponseManagerTest.php b/tests/Unit/SmartResponseManagerTest.php
+index 40973ad..bd16ac4 100644
+--- a/tests/Unit/SmartResponseManagerTest.php
++++ b/tests/Unit/SmartResponseManagerTest.php
+@@ -32,6 +32,26 @@ it('returns json for api requests', function () {
+         ->and($json['data'])->toBe(['id' => 1]);
+ });
+ 
++it('returns the opt-in legacy api envelope', function () {
++    $request = Request::create('/api/users', 'GET', [], [], [], [
++        'HTTP_ACCEPT' => 'application/json',
++    ]);
++
++    $response = app(SmartResponseManagerInterface::class)->respond(new SmartResponsePayload(
++        request: $request,
++        data: ['id' => 1],
++        message: 'Loaded',
++        format: 'legacy',
++    ));
++
++    expect(json_decode($response->getContent(), true))->toMatchArray([
++        'status' => true,
++        'message' => 'Loaded',
++        'data' => ['id' => 1],
++        'errors' => null,
++    ]);
++});
++
+ it('returns blade view for web requests', function () {
+     $request = Request::create('/users', 'GET', [], [], [], [
+         'HTTP_ACCEPT' => 'text/html',
+-- 
+2.51.1
+

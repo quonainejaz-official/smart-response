@@ -45,7 +45,7 @@ The detector also recognizes Laravel JSON expectations, configured API route pre
 
 The API layer includes validation and exception formatting, custom status codes, custom headers, API resources and collections, length-aware pagination, simple pagination, cursor pagination, request metadata, optional API version metadata, and rate-limit responses with `Retry-After`.
 
-The API layer can cache GET responses when you enable caching and provide a cache key or use the generated request key. It can log response preparation when logging is enabled.
+The API layer can cache successful configured-status GET responses when you enable caching and provide a cache key or use the generated request key. Cache entries are scalar response snapshots, vary by URL, negotiated format, and configured request headers, and authenticated responses require both an explicit opt-in and an isolated cache key. Dynamic timestamp or request-ID metadata disables caching by default to prevent stale correlation data. It can log response preparation when logging is enabled.
 
 ## Web behavior
 
@@ -68,6 +68,7 @@ The package does not bundle every server runtime. SOAP is part of PHP, while Web
 - **Custom formatters**: register a format without changing the manager
 - **Localization**: translate standard messages with a configurable fallback locale
 - **Middleware**: enable the `smart.response` middleware alias
+- **Production safeguards**: opt-in cache-backed fixed-window rate limits, declared request-payload limits, and additive security headers
 - **OpenAPI examples**: generate reusable example payloads for documentation
 - **Doctor command**: inspect PHP extensions, configured formats, and protocol readiness
 - **Configuration publishing**: publish the response configuration and language files
@@ -76,6 +77,8 @@ The package does not bundle every server runtime. SOAP is part of PHP, while Web
 ## What remains application-owned
 
 SmartResponse does not own business rules, authentication, authorization, validation rules, database queries, route definitions, GraphQL schemas, protobuf files, generated gRPC services, WebSocket authorization policy, webhook delivery workers, or protocol infrastructure.
+
+Rate limiting is deliberately middleware-scoped, so an application decides which routes are protected and which shared cache store provides atomic counters. Reverse-proxy limits, trusted-proxy configuration, WAF rules, authentication, authorization, CSP, and full request-body streaming limits remain application or infrastructure responsibilities.
 
 This boundary lets you keep one controller and one response contract while choosing the transport runtime that fits your deployment. It also prevents the package from claiming a server capability that the underlying PHP ecosystem does not provide.
 

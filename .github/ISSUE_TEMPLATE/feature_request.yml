@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest an improvement
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case
+      description: Explain the developer problem and why it belongs in SmartResponse
+    validations:
+      required: true

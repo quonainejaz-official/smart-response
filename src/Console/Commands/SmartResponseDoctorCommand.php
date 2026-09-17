@@ -18,7 +18,7 @@ final class SmartResponseDoctorCommand extends Command
         $this->info('SmartResponse readiness');
         $this->line('');
 
-        $this->check('PHP 8.2+', PHP_VERSION_ID >= 80200);
+        // Composer enforces the PHP 8.2 minimum before this command can run.
         $this->check('JSON extension', extension_loaded('json'));
         $this->check('XML extension', extension_loaded('xml'));
         $this->check('SOAP extension', extension_loaded('soap'), true);

@@ -67,8 +67,8 @@ directly through PHP's `SoapServer` and a WebSocket server runtime.
 - [x] Artisan doctor command for PHP extensions, configured adapters, and protocol readiness.
 - [ ] Artisan install, adapter, profile, and protocol generation commands.
 - [ ] Structured logs, metrics, OpenTelemetry hooks, and Laravel observability support.
-- [ ] Security hardening, rate limits, replay protection, and payload limits.
-- [ ] Streaming, caching, benchmarks, and large-payload safeguards.
+- [~] Security hardening, rate limits, and declared payload limits. Replay protection remains protocol-specific.
+- [~] Safe GET response caching and declared large-payload safeguards. Streaming and benchmarks remain open.
 
 ### Phase 6: Documentation and release quality
 

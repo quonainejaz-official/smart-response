@@ -8,12 +8,15 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Quonain\SmartResponse\DTO\SmartResponsePayload;
 use Quonain\SmartResponse\Support\SmartResponseBuilder;
+use Quonain\SmartResponse\Http\Client\OutboundRequest;
 
 interface SmartResponseManagerInterface
 {
     public function respond(SmartResponsePayload $payload, ?Request $request = null): Response;
 
     public function make(mixed $data = null): SmartResponseBuilder;
+
+    public function request(string $provider): OutboundRequest;
 
     /** @param array<string, mixed> $meta */
     public function success(

@@ -4,7 +4,68 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a Laravel response layer for applications that serve more than one client. You write the business logic once, return one SmartResponse payload, and select the output required by the request: REST JSON, a legacy JSON contract, XML, SOAP, GraphQL, Blade, Inertia, WebSocket, gRPC host output, or webhook payloads.
+**SmartResponse** is a PHP response library for standardizing and transforming application and REST API responses. It provides a zero-dependency core for plain PHP and framework adapters for Laravel, with JSON, XML, legacy API, and web response support where your application needs it.
+
+Install it with Composer:
+
+```bash
+composer require quonain/smart-response
+```
+
+The smallest framework-agnostic response looks like this:
+
+```php
+$response = (new \Quonain\SmartResponse\Core\SmartResponse())
+    ->success(['id' => 1], 'User loaded');
+
+echo $response->content();
+```
+
+Use the Laravel integration when you want one controller API for REST JSON, legacy JSON, XML, Blade, Inertia, and other supported adapters.
+
+Current release line: `2.0.0` (see `Quonain\\SmartResponse\\Core\\Version::CURRENT`).
+
+Releases are automated from GitHub Actions: run the **Release** workflow, enter a semantic version and release note, and it updates the changelog/version constant, runs tests and PHPStan, commits, and creates the matching `vX.Y.Z` tag. Locally, the same preparation is available with `composer release -- 2.0.0 "Release note"`.
+
+## Any PHP framework or plain PHP
+
+The core has no framework dependency. It returns an immutable response value that your framework can emit with its own response object:
+
+```php
+use Quonain\SmartResponse\Core\ArrayCacheStore;
+use Quonain\SmartResponse\Core\FixedWindowRateLimiter;
+use Quonain\SmartResponse\Core\SmartResponse;
+
+$responses = new SmartResponse();
+$limiter = new FixedWindowRateLimiter(new ArrayCacheStore());
+$limit = $limiter->attempt('user-or-ip:'.$identity, limit: 60, decaySeconds: 60);
+
+$response = $limit['allowed']
+    ? $responses->success(['id' => 1], 'User loaded')
+    : $responses->rateLimited(retryAfter: $limit['retry_after']);
+
+http_response_code($response->status());
+foreach ($response->headers() as $name => $value) {
+    header("{$name}: {$value}");
+}
+echo $response->content();
+```
+
+For CodeIgniter 4, pass `status()`, `headers()`, and `body()` to its response service:
+
+```php
+$result = (new \Quonain\SmartResponse\Core\SmartResponse())
+    ->success(['id' => 1], 'User loaded');
+
+$response = $this->response->setStatusCode($result->status());
+foreach ($result->headers() as $name => $value) {
+    $response->setHeader($name, $value);
+}
+
+return $response->setJSON($result->body());
+```
+
+The core also supports legacy JSON (`legacy()`), GraphQL JSON (`graphQl()`), XML (`xml()`), and standardized rate-limit output. Framework-owned concerns—views, redirects, sessions, queues, and server runtimes—remain adapter responsibilities. For production rate limits, implement `Core\\CacheStore` with your framework's shared atomic cache (for example Redis); `ArrayCacheStore` is process-local only.
 
 ## Read this before using SmartResponse
 
@@ -42,6 +103,43 @@ The default API contract is:
 
 You can preserve an existing legacy contract with a profile or an explicit `legacy` format. You can add a custom formatter when your application needs another envelope. You do not need a second controller for each response shape.
 
+## Production safeguards
+
+The `smart.response` middleware is the package's opt-in protection boundary. It can apply a cache-backed fixed-window rate limit, reject oversized declared request bodies, and add conservative response headers without overwriting headers set by your application. Enable only the safeguards your application needs:
+
+```php
+// config/smart-response.php
+'cache' => [
+    'enabled' => true,
+    'ttl' => 60,
+    'store' => 'redis',
+    // Authenticated responses remain uncached unless explicitly opted in.
+],
+'meta' => [
+    'include_timestamp' => false,
+    'include_request_id' => false,
+],
+'rate_limit' => [
+    'enabled' => true,
+    'max_attempts' => 120,
+    'decay_seconds' => 60,
+    'store' => 'redis',
+    'key' => 'user_or_ip',
+],
+'payload_limits' => ['enabled' => true, 'max_bytes' => 1_048_576],
+'security_headers' => ['enabled' => true],
+```
+
+Apply the middleware to the routes you want to protect:
+
+```php
+Route::middleware('smart.response')->group(function () {
+    Route::get('/api/users', UsersController::class);
+});
+```
+
+Cached responses are scalar snapshots, not framework response objects. Only successful configured-status `GET` API responses are cached; keys vary by URL, negotiated format, and `Accept` by default. Dynamic timestamp and request-ID metadata disables caching by default, so turn those values off for cacheable endpoints. Authenticated caching requires both an explicit opt-in and a per-user cache key. For distributed rate limiting, use an atomic shared store such as Redis rather than the array or file drivers.
+
 ### What the current release covers
 
 | Surface | Current capability | Runtime requirement |
@@ -65,6 +163,7 @@ See the complete capability inventory and implementation boundaries in [features
 ## Table of contents
 
 - [Features](#features)
+- [Documentation](#documentation)
 - [Read this before using SmartResponse](#read-this-before-using-smartresponse)
 - [Current release scope](#what-the-current-release-covers)
 - [Requirements](#requirements)
@@ -110,6 +209,8 @@ SmartResponse includes these features in the current codebase:
 
 - PHP `^8.2`
 - Laravel `^10.0` · `^11.0` · `^12.0` · `^13.0`
+
+The core response value object does not require Laravel. Laravel-only features such as Blade views, middleware, facades, macros, and service-provider integration require the corresponding Laravel application components.
 
 ---
 
@@ -568,6 +669,9 @@ OpenApiExample::errorExample();
 ```bash
 composer install
 composer test
+composer analyse
+composer validate --strict
+composer audit
 ```
 
 Check the local runtime before enabling optional protocol integrations:
@@ -605,9 +709,27 @@ smart-response/
 
 ---
 
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Installation](docs/installation.md)
+- [Basic usage](docs/basic-usage.md)
+- [Response formats](docs/responses.md)
+- [JSON responses](docs/json.md)
+- [XML responses](docs/xml.md)
+- [Legacy API compatibility](docs/legacy.md)
+- [Request detection and format selection](docs/content-negotiation.md)
+- [Customization and extension](docs/customization.md)
+- [Framework integration](docs/framework-integration.md)
+- [Architecture](docs/architecture.md)
+- [Migration guide](docs/migration.md)
+- [FAQ](docs/faq.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Search intent coverage](docs/search-intent.md)
+
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history (`1.1.0` — HTTP shortcuts, meta enrichment, cursor pagination, Bearer detection).
+See [CHANGELOG.md](CHANGELOG.md) for version history and the current `2.0.0` release notes.
 
 ---
 
@@ -620,3 +742,33 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT © [Quonain Ejaz](https://github.com/quonainejaz-official). See [LICENSE](LICENSE).
+
+## Outbound API clients
+
+Configure providers in `config/smart-response.php` and use the same facade for outbound calls:
+
+```php
+'http' => ['providers' => [
+    'github' => [
+        'base_url' => env('GITHUB_API_URL', 'https://api.github.com'),
+        'auth' => ['type' => 'bearer', 'token' => env('GITHUB_TOKEN')],
+    ],
+]],
+```
+
+```php
+$response = SmartResponse::request('github')
+    ->get('/users')
+    ->query(['page' => 1])
+    ->headers(['Accept' => 'application/vnd.github+json'])
+    ->retry(3)
+    ->send();
+
+$users = $response->decoded();
+```
+
+The client supports GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD, JSON/form/multipart bodies, bearer/API-key/basic authentication, timeouts, retries with exponential backoff, response decoding, DTO mapping, host allow-lists, and response-size limits. Configure `http.max_response_bytes` and provider `allowed_hosts` for production deployments.
+
+## Structured response telemetry
+
+When `logging.enabled` is enabled, each response emits structured lifecycle fields including request/trace IDs, method, URL, negotiated format, status, duration, cache state and error code. Sensitive header names listed in `logging.redact` are never intended to be recorded by application hooks.

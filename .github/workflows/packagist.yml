@@ -10,4 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Packagist package update
-        run: curl -fsS -X POST --retry 3 "${{ secrets.PACKAGIST_UPDATE_URL }}"
+        env:
+          PACKAGIST_UPDATE_URL: ${{ secrets.PACKAGIST_UPDATE_URL }}
+        shell: bash
+        run: |
+          if [[ -z "$PACKAGIST_UPDATE_URL" ]]; then
+            echo "PACKAGIST_UPDATE_URL is not configured; Packagist webhook sync is skipped."
+            exit 0
+          fi
+
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            --request POST "$PACKAGIST_UPDATE_URL"

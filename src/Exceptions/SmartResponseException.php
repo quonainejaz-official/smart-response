@@ -6,7 +6,7 @@ namespace Quonain\SmartResponse\Exceptions;
 
 use Exception;
 
-final class SmartResponseException extends Exception
+class SmartResponseException extends Exception
 {
     public static function missingView(): self
     {

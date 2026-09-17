@@ -9,14 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Remove compromised font asset and publish clean package contents
+
+## [2.0.0] - 2026-09-17
+
+### Added
+
+- Remove compromised font asset and publish clean package contents
+
+## [1.2.1] - 2026-09-17
+
+### Added
+
+- Framework-agnostic core, safe caching, rate limiting, and automated releases
+
+### Changed
+
+- Improved Composer metadata and package positioning for PHP response and API searches
+- Added capability-focused documentation, search-intent coverage, and open-source community files
+- Expanded CI validation across PHP 8.2, 8.3, and 8.4 with Composer validation and security auditing
+
+## [1.2.0] - 2026-09-17
+
+### Added
+
 - A complete feature and scope reference for the current response platform
 - A prominent README explanation of the one-controller response model and runtime boundaries
 - Documentation links for SOAP, WebSocket, gRPC, webhook, GraphQL, API, and web capabilities
+- A pure-PHP `Core\\SmartResponse` API, response value object, cache contract, in-memory store, and fixed-window rate limiter for standalone PHP and framework adapters
+- Opt-in, cache-backed fixed-window rate limiting, declared request-payload limits, and additive security headers for Laravel routes
 
 ### Changed
 
 - Platform plan now reflects the implemented SOAP, WebSocket, and gRPC runtime slice
 - Runtime documentation declares prerequisites and application-owned responsibilities
+- Removed Laravel's Illuminate components from production requirements; Laravel integration remains available when Laravel provides them
+- Hardened response caching with scalar snapshots, status filtering, authenticated and bearer-token protection, and dynamic-metadata bypass
+- XML output now works without Laravel's response factory and normalizes unsafe element names
 
 ## [1.1.1] - 2026-05-21
 

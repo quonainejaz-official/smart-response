@@ -22,7 +22,7 @@ use Quonain\SmartResponse\Formatters\XmlApiFormatter;
 use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
 use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
 use Quonain\SmartResponse\Formatters\SoapApiFormatter;
-use Quonain\SmartResponse\Http\Middleware\SmartResponseMiddleware;
+use Quonain\SmartResponse\Http\Middleware\SmartResponseProtectionMiddleware;
 use Quonain\SmartResponse\Macros\ResponseMacros;
 use Quonain\SmartResponse\Services\SmartResponseManager;
 use Quonain\SmartResponse\Support\InertiaAdapter;
@@ -30,9 +30,12 @@ use Quonain\SmartResponse\Support\MessageTranslator;
 use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\RateLimitResponse;
+use Quonain\SmartResponse\Support\RequestRateLimiter;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
+use Quonain\SmartResponse\Http\Client\OutboundClient;
 use Quonain\SmartResponse\Console\Commands\SmartResponseDoctorCommand;
+use Quonain\SmartResponse\Console\Commands\SmartResponseInstallCommand;
 
 final class SmartResponseServiceProvider extends ServiceProvider
 {
@@ -48,6 +51,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 SmartResponseDoctorCommand::class,
+                SmartResponseInstallCommand::class,
             ]);
 
             $this->publishes([
@@ -77,6 +81,12 @@ final class SmartResponseServiceProvider extends ServiceProvider
             return new MetaEnricher($app['config']->get('smart-response', []));
         });
         $this->app->singleton(InertiaAdapter::class);
+        $this->app->singleton(OutboundClient::class, function ($app) {
+            return new OutboundClient(
+                $app['config']->get('smart-response.http.providers', []),
+                $app['config']->get('smart-response.http', []),
+            );
+        });
 
         $this->app->singleton(MessageTranslator::class, function ($app) {
             return new MessageTranslator(
@@ -146,6 +156,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
                 $app->make(MetaEnricher::class),
                 $cache instanceof CacheRepository ? $cache : null,
                 $app->bound(Dispatcher::class) ? $app->make(Dispatcher::class) : null,
+                $app->make(OutboundClient::class),
                 $config,
             );
         });
@@ -164,6 +175,21 @@ final class SmartResponseServiceProvider extends ServiceProvider
                 $app['config']->get('smart-response', []),
             );
         });
+
+        $this->app->singleton(RequestRateLimiter::class, function ($app) {
+            $config = $app['config']->get('smart-response.rate_limit', []);
+            $cache = $app->make('cache')->store($config['store'] ?? null);
+
+            return new RequestRateLimiter($cache, $config);
+        });
+
+        $this->app->singleton(SmartResponseProtectionMiddleware::class, function ($app) {
+            return new SmartResponseProtectionMiddleware(
+                $app->make(SmartResponseManagerInterface::class),
+                $app->bound('cache') ? $app->make(RequestRateLimiter::class) : null,
+                $app['config']->get('smart-response', []),
+            );
+        });
     }
 
     private function registerMiddleware(): void
@@ -177,6 +203,6 @@ final class SmartResponseServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $alias = $config['alias'] ?? 'smart.response';
 
-        $router->aliasMiddleware($alias, SmartResponseMiddleware::class);
+        $router->aliasMiddleware($alias, SmartResponseProtectionMiddleware::class);
     }
 }
