@@ -20,6 +20,7 @@ use Quonain\SmartResponse\Support\MessageTranslator;
 use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Support\SmartResponseBuilder;
 
 final class SmartResponseManager implements SmartResponseManagerInterface
 {
@@ -42,6 +43,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
         $payload = $payload->withRequest($request);
 
+        $payload = $this->applyProfile($payload);
         $payload = $this->applyTranslations($payload);
         $payload = $this->applyPagination($payload);
         $payload = $this->applyFormatDetection($payload, $request);
@@ -67,6 +69,11 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         $this->storeCachedResponse($payload, $response);
 
         return $response;
+    }
+
+    public function make(mixed $data = null): SmartResponseBuilder
+    {
+        return new SmartResponseBuilder($this, $data);
     }
 
     public function success(
@@ -172,7 +179,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
     private function buildResponse(SmartResponsePayload $payload, Request $request): Response
     {
-        if ($this->detector->expectsApi($request)) {
+        if ($this->detector->expectsApi($request) || in_array($payload->format, $this->apiFormats(), true)) {
             return $payload->success
                 ? $this->apiBuilder->success($payload)
                 : $this->apiBuilder->error($payload);
@@ -201,6 +208,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             route: $payload->route,
             routeParameters: $payload->routeParameters,
             format: $payload->format,
+            profile: $payload->profile,
             locale: $payload->locale,
             flash: $payload->flash,
             toast: $payload->toast,
@@ -233,30 +241,38 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             return $payload;
         }
 
-        return new SmartResponsePayload(
-            request: $payload->request,
-            data: $payload->data,
-            view: $payload->view,
-            viewData: $payload->viewData,
-            message: $payload->message,
-            success: $payload->success,
-            errors: $payload->errors,
-            meta: $payload->meta,
-            status: $payload->status,
-            redirect: $payload->redirect,
-            route: $payload->route,
-            routeParameters: $payload->routeParameters,
-            format: $this->detector->getPreferredFormat($request),
-            locale: $payload->locale,
-            flash: $payload->flash,
-            toast: $payload->toast,
-            cacheKey: $payload->cacheKey,
-            cacheTtl: $payload->cacheTtl,
-            headers: $payload->headers,
-            inertiaComponent: $payload->inertiaComponent,
-            useInertia: $payload->useInertia,
-            useLivewire: $payload->useLivewire,
+        // A normal browser request must remain a web response. The configured
+        // JSON default is only an API fallback, not a signal to convert views.
+        if (! $this->detector->expectsApi($request)) {
+            return $payload;
+        }
+
+        return $payload->replicate(format: $this->detector->getPreferredFormat($request));
+    }
+
+    private function applyProfile(SmartResponsePayload $payload): SmartResponsePayload
+    {
+        if ($payload->profile === null) {
+            return $payload;
+        }
+
+        $profile = $this->config['profiles'][$payload->profile] ?? null;
+
+        if (! is_array($profile)) {
+            return $payload;
+        }
+
+        return $payload->replicate(
+            format: $payload->format ?? ($profile['format'] ?? null),
+            meta: array_merge($profile['meta'] ?? [], $payload->meta),
+            headers: array_merge($profile['headers'] ?? [], $payload->headers ?? []),
         );
+    }
+
+    /** @return list<string> */
+    private function apiFormats(): array
+    {
+        return $this->config['api_formats'] ?? ['json', 'xml', 'legacy', 'graphql', 'soap'];
     }
 
     private function shouldUseCache(SmartResponsePayload $payload): bool

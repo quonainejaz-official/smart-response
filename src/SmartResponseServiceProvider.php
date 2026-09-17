@@ -31,6 +31,7 @@ use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\RateLimitResponse;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
 
 final class SmartResponseServiceProvider extends ServiceProvider
 {
@@ -94,6 +95,17 @@ final class SmartResponseServiceProvider extends ServiceProvider
         $this->app->singleton(GraphQLApiFormatter::class);
         $this->app->singleton(SoapApiFormatter::class);
 
+        $this->app->singleton(ResponseFormatterRegistry::class, function ($app) {
+            $registry = new ResponseFormatterRegistry();
+            $registry->register('json', $app->make(JsonApiFormatter::class));
+            $registry->register('xml', $app->make(XmlApiFormatter::class));
+            $registry->register('legacy', $app->make(LegacyApiFormatter::class));
+            $registry->register('graphql', $app->make(GraphQLApiFormatter::class));
+            $registry->register('soap', $app->make(SoapApiFormatter::class));
+
+            return $registry;
+        });
+
         $this->app->singleton(ApiResponseBuilderInterface::class, ApiResponseBuilder::class);
         $this->app->singleton(ApiResponseBuilder::class, function ($app) {
             return new ApiResponseBuilder(
@@ -102,6 +114,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
                 $app->make(LegacyApiFormatter::class),
                 $app->make(GraphQLApiFormatter::class),
                 $app->make(SoapApiFormatter::class),
+                $app->make(ResponseFormatterRegistry::class),
                 $app['config']->get('smart-response', []),
             );
         });

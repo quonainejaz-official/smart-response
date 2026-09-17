@@ -55,6 +55,13 @@ return [
     | Supported: json, xml, legacy, graphql, soap
     */
     'default_format' => 'json',
+    'api_formats' => ['json', 'xml', 'legacy', 'graphql', 'soap'],
+
+    /* Named response contracts. Per-response values override profile values. */
+    'profiles' => [
+        'modern-api' => ['format' => 'json'],
+        'legacy-v1' => ['format' => 'legacy'],
+    ],
 
     /*
     | Legacy API response shape (selected with format: 'legacy').

@@ -7,10 +7,13 @@ namespace Quonain\SmartResponse\Contracts;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Quonain\SmartResponse\DTO\SmartResponsePayload;
+use Quonain\SmartResponse\Support\SmartResponseBuilder;
 
 interface SmartResponseManagerInterface
 {
     public function respond(SmartResponsePayload $payload, ?Request $request = null): Response;
+
+    public function make(mixed $data = null): SmartResponseBuilder;
 
     public function success(
         mixed $data = null,

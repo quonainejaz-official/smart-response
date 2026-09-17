@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a production-ready Laravel package that returns **API JSON** or **Blade / Inertia web views** from the **same controller method** — with automatic request-type detection.
+**SmartResponse** is a unified Laravel response platform. Keep one controller and one business-logic path while it produces **REST JSON, legacy envelopes, XML, SOAP, GraphQL, Blade, or Inertia responses** from the same payload, with automatic request-type detection and explicit response profiles.
 
 ---
 
@@ -185,6 +185,25 @@ $webhook = \Quonain\SmartResponse\Support\WebhookPayload::create(
 WebSocket server. `WebhookPayload` creates a JSON-safe event body and an
 optional HMAC-SHA256 signature. The library does not force a specific gRPC,
 WebSocket, or HTTP client dependency on applications.
+
+### Fluent response builder and profiles
+
+For code shared by multiple clients, use the fluent builder and select a named
+response contract without changing the controller logic:
+
+```php
+return SmartResponse::make($user)
+    ->request($request)
+    ->profile('legacy-v1')
+    ->message('User loaded')
+    ->meta(['resource' => 'user'])
+    ->send();
+```
+
+The built-in `modern-api` and `legacy-v1` profiles can be customized in
+`config/smart-response.php`. A response can also select a format through the
+`X-Smart-Response-Format` header, `?format=...`, or a route suffix such as
+`/users.xml`. Explicit payload options always take priority.
 
 ---
 

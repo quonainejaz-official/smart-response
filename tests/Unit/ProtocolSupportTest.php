@@ -8,6 +8,9 @@ use Quonain\SmartResponse\Formatters\SoapApiFormatter;
 use Quonain\SmartResponse\Support\GrpcResponse;
 use Quonain\SmartResponse\Support\WebhookPayload;
 use Quonain\SmartResponse\Support\WebSocketMessage;
+use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
+use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 it('formats graphql responses', function () {
     $response = (new GraphQLApiFormatter())->format(new SmartResponsePayload(data: ['id' => 1]));
@@ -32,4 +35,20 @@ it('provides transport-neutral grpc, websocket, and webhook payloads', function 
     expect($grpc->toArray()['data'])->toBe(['id' => 1])
         ->and(json_decode($socket->encode(), true)['event'])->toBe('user.loaded')
         ->and($webhook)->toHaveKey('signature');
+});
+
+it('allows applications to register custom response formatters', function () {
+    $registry = new ResponseFormatterRegistry();
+    $formatter = new class implements ResponseFormatterInterface {
+        public function format(SmartResponsePayload $payload): Response
+        {
+            return new Response('custom');
+        }
+    };
+
+    $registry->register('custom', $formatter);
+
+    expect($registry->has('CUSTOM'))->toBeTrue()
+        ->and($registry->get('custom'))->toBe($formatter)
+        ->and($registry->formats())->toBe(['custom']);
 });
