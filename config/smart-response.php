@@ -27,6 +27,9 @@ return [
         'xml_accept' => ['application/xml', 'text/xml'],
         'api_route_prefixes' => ['api'],
         'api_route_patterns' => ['api/*'],
+        'format_header' => 'X-Smart-Response-Format',
+        'format_query_parameter' => 'format',
+        'format_route_suffixes' => ['json', 'xml', 'legacy', 'graphql', 'soap'],
         'bearer_as_api' => true,
     ],
 
@@ -52,6 +55,13 @@ return [
     | Supported: json, xml, legacy, graphql, soap
     */
     'default_format' => 'json',
+    'api_formats' => ['json', 'xml', 'legacy', 'graphql', 'soap'],
+
+    /* Named response contracts. Per-response values override profile values. */
+    'profiles' => [
+        'modern-api' => ['format' => 'json'],
+        'legacy-v1' => ['format' => 'legacy'],
+    ],
 
     /*
     | Legacy API response shape (selected with format: 'legacy').

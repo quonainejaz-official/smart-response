@@ -13,6 +13,9 @@ if (! function_exists('smart_response')) {
      * Build a unified smart response.
      *
      * @param  array<string, mixed>|null  $viewData
+     * @param  array<string, mixed>  $meta
+     * @param  array<string, mixed>  $routeParameters
+     * @param  array<string, string|list<string>>|null  $headers
      */
     function smart_response(
         ?Request $request = null,
@@ -74,6 +77,7 @@ if (! function_exists('smart_rate_limit_response')) {
 }
 
 if (! function_exists('smart_created')) {
+    /** @param array<string, mixed> $meta */
     function smart_created(mixed $data = null, ?string $message = null, array $meta = []): Response
     {
         return app(SmartResponseManagerInterface::class)->created($data, $message, $meta);

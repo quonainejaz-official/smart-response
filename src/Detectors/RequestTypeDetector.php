@@ -10,6 +10,7 @@ use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
 final class RequestTypeDetector implements RequestDetectorInterface
 {
     public function __construct(
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
@@ -53,6 +54,10 @@ final class RequestTypeDetector implements RequestDetectorInterface
 
     public function expectsApi(Request $request): bool
     {
+        if ($this->hasExplicitApiFormat($request)) {
+            return true;
+        }
+
         if ($this->config['detection']['bearer_as_api'] ?? false) {
             if ($request->bearerToken() !== null) {
                 return true;
@@ -76,11 +81,48 @@ final class RequestTypeDetector implements RequestDetectorInterface
 
     public function getPreferredFormat(Request $request): string
     {
+        $supported = $this->config['detection']['format_route_suffixes'] ?? [];
+        $default = $this->config['default_format'] ?? 'json';
+
+        $explicit = strtolower((string) $request->header(
+            $this->config['detection']['format_header'] ?? 'X-Smart-Response-Format',
+            ''
+        ));
+
+        if ($this->isSupportedFormat($explicit, $supported)) {
+            return $explicit;
+        }
+
+        $queryParameter = $this->config['detection']['format_query_parameter'] ?? 'format';
+        $query = strtolower((string) $request->query($queryParameter, ''));
+
+        if ($this->isSupportedFormat($query, $supported)) {
+            return $query;
+        }
+
+        $suffix = strtolower((string) $request->route('format', ''));
+
+        if ($this->isSupportedFormat($suffix, $supported)) {
+            return $suffix;
+        }
+
+        $path = trim($request->path(), '/');
+
+        foreach ($supported as $format) {
+            if (str_ends_with($path, '.'.$format)) {
+                return $format;
+            }
+        }
+
         if ($this->expectsXml($request)) {
             return 'xml';
         }
 
-        return $this->config['default_format'] ?? 'json';
+        if ($this->acceptsGraphql($request)) {
+            return 'graphql';
+        }
+
+        return $default;
     }
 
     private function isApiRoute(Request $request): bool
@@ -111,5 +153,48 @@ final class RequestTypeDetector implements RequestDetectorInterface
         }
 
         return false;
+    }
+
+    private function acceptsGraphql(Request $request): bool
+    {
+        if (! ($this->config['graphql']['enabled'] ?? false)) {
+            return false;
+        }
+
+        $graphqlAccept = $this->config['graphql']['accept'] ?? '';
+
+        return $graphqlAccept !== ''
+            && str_contains(strtolower($request->header('Accept', '')), strtolower($graphqlAccept));
+    }
+
+    private function hasExplicitApiFormat(Request $request): bool
+    {
+        $formats = $this->config['api_formats'] ?? ['json', 'xml', 'legacy', 'graphql', 'soap'];
+        $headerName = $this->config['detection']['format_header'] ?? 'X-Smart-Response-Format';
+        $queryName = $this->config['detection']['format_query_parameter'] ?? 'format';
+        $header = strtolower((string) $request->header($headerName, ''));
+        $query = strtolower((string) $request->query($queryName, ''));
+        $routeFormat = strtolower((string) $request->route('format', ''));
+        $path = strtolower(trim($request->path(), '/'));
+
+        if ($this->isSupportedFormat($header, $formats)
+            || $this->isSupportedFormat($query, $formats)
+            || $this->isSupportedFormat($routeFormat, $formats)) {
+            return true;
+        }
+
+        foreach ($formats as $format) {
+            if (str_ends_with($path, '.'.$format)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param list<string> $supported */
+    private function isSupportedFormat(string $format, array $supported): bool
+    {
+        return $format !== '' && in_array($format, $supported, true);
     }
 }

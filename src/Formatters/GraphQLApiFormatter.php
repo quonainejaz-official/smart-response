@@ -32,6 +32,7 @@ final class GraphQLApiFormatter implements ResponseFormatterInterface
         return $response;
     }
 
+    /** @return list<array<string, mixed>> */
     private function errors(SmartResponsePayload $payload): array
     {
         $errors = $payload->errors ?? $payload->message ?? 'Request failed';

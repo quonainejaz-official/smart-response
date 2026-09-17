@@ -6,7 +6,7 @@ namespace Quonain\SmartResponse;
 
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Routing\Registrar;
+use Illuminate\Routing\Router;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Support\ServiceProvider;
 use Quonain\SmartResponse\Builders\ApiResponseBuilder;
@@ -31,6 +31,8 @@ use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\RateLimitResponse;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
+use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
+use Quonain\SmartResponse\Console\Commands\SmartResponseDoctorCommand;
 
 final class SmartResponseServiceProvider extends ServiceProvider
 {
@@ -44,6 +46,10 @@ final class SmartResponseServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                SmartResponseDoctorCommand::class,
+            ]);
+
             $this->publishes([
                 __DIR__.'/../config/smart-response.php' => config_path('smart-response.php'),
             ], 'smart-response-config');
@@ -94,14 +100,21 @@ final class SmartResponseServiceProvider extends ServiceProvider
         $this->app->singleton(GraphQLApiFormatter::class);
         $this->app->singleton(SoapApiFormatter::class);
 
+        $this->app->singleton(ResponseFormatterRegistry::class, function ($app) {
+            $registry = new ResponseFormatterRegistry();
+            $registry->register('json', $app->make(JsonApiFormatter::class));
+            $registry->register('xml', $app->make(XmlApiFormatter::class));
+            $registry->register('legacy', $app->make(LegacyApiFormatter::class));
+            $registry->register('graphql', $app->make(GraphQLApiFormatter::class));
+            $registry->register('soap', $app->make(SoapApiFormatter::class));
+
+            return $registry;
+        });
+
         $this->app->singleton(ApiResponseBuilderInterface::class, ApiResponseBuilder::class);
         $this->app->singleton(ApiResponseBuilder::class, function ($app) {
             return new ApiResponseBuilder(
-                $app->make(JsonApiFormatter::class),
-                $app->make(XmlApiFormatter::class),
-                $app->make(LegacyApiFormatter::class),
-                $app->make(GraphQLApiFormatter::class),
-                $app->make(SoapApiFormatter::class),
+                $app->make(ResponseFormatterRegistry::class),
                 $app['config']->get('smart-response', []),
             );
         });
@@ -161,7 +174,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
             return;
         }
 
-        $router = $this->app->make(Registrar::class);
+        $router = $this->app->make(Router::class);
         $alias = $config['alias'] ?? 'smart.response';
 
         $router->aliasMiddleware($alias, SmartResponseMiddleware::class);

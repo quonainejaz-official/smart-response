@@ -11,6 +11,7 @@ use Quonain\SmartResponse\DTO\SmartResponsePayload;
 final class MetaEnricher
 {
     public function __construct(
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 

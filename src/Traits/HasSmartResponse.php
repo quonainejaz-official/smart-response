@@ -17,6 +17,12 @@ trait HasSmartResponse
      * @param  array<string, mixed>|null  $viewData
      * @param  array<string, mixed>  $meta
      */
+    /**
+     * @param array<string, mixed>|null $viewData
+     * @param array<string, mixed> $meta
+     * @param array<string, mixed> $routeParameters
+     * @param array<string, string|list<string>>|null $headers
+     */
     protected function smartResponse(
         ?Request $request = null,
         mixed $data = null,
@@ -67,6 +73,7 @@ trait HasSmartResponse
         return $this->smartResponseManager()->respond($payload, $request);
     }
 
+    /** @param array<string, mixed> $meta */
     protected function smartSuccess(
         mixed $data = null,
         ?string $message = null,
@@ -76,6 +83,7 @@ trait HasSmartResponse
         return $this->smartResponseManager()->success($data, $message, $meta, $status);
     }
 
+    /** @param array<string, mixed> $meta */
     protected function smartError(
         ?string $message = null,
         mixed $errors = null,
@@ -93,6 +101,7 @@ trait HasSmartResponse
         return $this->smartResponseManager()->validationError($errors, $message, $status);
     }
 
+    /** @param array<string, mixed> $meta */
     protected function smartCreated(
         mixed $data = null,
         ?string $message = null,

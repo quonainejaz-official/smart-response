@@ -10,6 +10,7 @@ final class MessageTranslator
 {
     public function __construct(
         private readonly Translator $translator,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
@@ -26,10 +27,8 @@ final class MessageTranslator
         $prefix = $this->config['locale']['message_prefix'] ?? 'smart-response';
         $key = "{$prefix}.{$message}";
 
-        if ($this->translator->has($key, $locale)) {
-            return $this->translator->get($key, [], $locale);
-        }
+        $translated = $this->translator->get($key, [], $locale);
 
-        return $message;
+        return $translated === $key ? $message : (string) $translated;
     }
 }

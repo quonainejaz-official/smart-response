@@ -7,6 +7,7 @@ namespace Quonain\SmartResponse\Support;
 /** Transport-neutral gRPC response value object; map it in any gRPC server adapter. */
 final class GrpcResponse
 {
+    /** @param array<string, mixed> $meta */
     public function __construct(
         public readonly mixed $data = null,
         public readonly ?string $message = null,
@@ -16,6 +17,7 @@ final class GrpcResponse
         public readonly int $status = 0,
     ) {}
 
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return ['success' => $this->success, 'message' => $this->message, 'data' => $this->data, 'meta' => $this->meta, 'errors' => $this->errors];

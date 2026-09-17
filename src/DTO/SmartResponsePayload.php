@@ -15,6 +15,7 @@ final class SmartResponsePayload
 {
     /**
      * @param  array<string, mixed>|null  $viewData
+     * @param  array<string, mixed>  $routeParameters
      * @param  array<string, mixed>  $meta
      * @param  array<string, mixed>|null  $headers
      */
@@ -32,6 +33,7 @@ final class SmartResponsePayload
         public readonly ?string $route = null,
         public readonly array $routeParameters = [],
         public readonly ?string $format = null,
+        public readonly ?string $profile = null,
         public readonly ?string $locale = null,
         public readonly bool $flash = true,
         public readonly bool $toast = false,
@@ -56,6 +58,12 @@ final class SmartResponsePayload
         return $this->replicate(meta: array_merge($this->meta, $meta));
     }
 
+    /**
+     * @param array<string, mixed>|null $viewData
+     * @param array<string, mixed>|null $routeParameters
+     * @param array<string, mixed>|null $meta
+     * @param array<string, string|list<string>>|null $headers
+     */
     public function replicate(
         ?Request $request = null,
         mixed $data = null,
@@ -70,6 +78,7 @@ final class SmartResponsePayload
         ?string $route = null,
         ?array $routeParameters = null,
         ?string $format = null,
+        ?string $profile = null,
         ?string $locale = null,
         ?bool $flash = null,
         ?bool $toast = null,
@@ -94,6 +103,7 @@ final class SmartResponsePayload
             route: $route ?? $this->route,
             routeParameters: $routeParameters ?? $this->routeParameters,
             format: $format ?? $this->format,
+            profile: $profile ?? $this->profile,
             locale: $locale ?? $this->locale,
             flash: $flash ?? $this->flash,
             toast: $toast ?? $this->toast,

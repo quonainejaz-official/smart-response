@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Quonain\SmartResponse\Contracts;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 use Quonain\SmartResponse\DTO\SmartResponsePayload;
 
 interface ApiResponseBuilderInterface

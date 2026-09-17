@@ -34,6 +34,11 @@
         "pestphp/pest-plugin-laravel": "^2.0|^3.0",
         "phpstan/phpstan": "^1.10|^2.0"
     },
+    "suggest": {
+        "cboden/ratchet": "Compatible WebSocket runtime for Runtime\\WebSocket\\WebSocketServer",
+        "ext-soap": "Required for Runtime\\Soap\\SoapServerAdapter",
+        "ext-grpc": "Optional PHP gRPC client support"
+    },
     "autoload": {
         "psr-4": {
             "Quonain\\SmartResponse\\": "src/"

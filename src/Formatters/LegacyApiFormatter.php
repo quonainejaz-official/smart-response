@@ -17,6 +17,7 @@ use Quonain\SmartResponse\DTO\SmartResponsePayload;
  */
 final class LegacyApiFormatter implements ResponseFormatterInterface
 {
+    /** @param array<string, mixed> $config */
     public function __construct(private readonly array $config) {}
 
     public function format(SmartResponsePayload $payload): BaseResponse
