@@ -23,9 +23,9 @@ echo $response->content();
 
 Use the Laravel integration when you want one controller API for REST JSON, legacy JSON, XML, Blade, Inertia, and other supported adapters.
 
-Current release line: `1.2.0` (see `Quonain\\SmartResponse\\Core\\Version::CURRENT`).
+Current release line: `2.0.0` (see `Quonain\\SmartResponse\\Core\\Version::CURRENT`).
 
-Releases are automated from GitHub Actions: run the **Release** workflow, enter a semantic version and release note, and it updates the changelog/version constant, runs tests and PHPStan, commits, and creates the matching `vX.Y.Z` tag. Locally, the same preparation is available with `composer release -- 1.2.1 "Release note"`.
+Releases are automated from GitHub Actions: run the **Release** workflow, enter a semantic version and release note, and it updates the changelog/version constant, runs tests and PHPStan, commits, and creates the matching `vX.Y.Z` tag. Locally, the same preparation is available with `composer release -- 2.0.0 "Release note"`.
 
 ## Any PHP framework or plain PHP
 
@@ -729,7 +729,7 @@ smart-response/
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history and the current `1.2.0` release notes.
+See [CHANGELOG.md](CHANGELOG.md) for version history and the current `2.0.0` release notes.
 
 ---
 

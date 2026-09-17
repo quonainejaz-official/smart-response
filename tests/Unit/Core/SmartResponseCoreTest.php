@@ -8,7 +8,7 @@ use Quonain\SmartResponse\Core\SmartResponse;
 use Quonain\SmartResponse\Core\Version;
 
 it('exposes one package version for every framework adapter', function () {
-    expect(Version::CURRENT)->toBe('1.2.0');
+    expect(Version::CURRENT)->toBe('2.0.0');
 });
 
 it('provides a JSON response without a framework runtime', function () {

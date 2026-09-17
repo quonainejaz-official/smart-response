@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Remove compromised font asset and publish clean package contents
+
+## [2.0.0] - 2026-09-17
+
+### Added
+
+- Remove compromised font asset and publish clean package contents
+
+## [1.2.1] - 2026-09-17
+
+### Added
+
 - Framework-agnostic core, safe caching, rate limiting, and automated releases
 
 ### Changed

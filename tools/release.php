@@ -41,7 +41,7 @@ $releaseHeading = "## [{$version}] - {$today}";
 if (preg_match('/^## \[\d+\.\d+\.\d+(?:-[^]]+)?\] - Unreleased$/m', $changelog, $match, PREG_OFFSET_CAPTURE)) {
     $offset = $match[0][1];
     $changelog = substr_replace($changelog, $releaseHeading, $offset, strlen($match[0][0]));
-} elseif (preg_match('/^## Unreleased$/m', $changelog, $match, PREG_OFFSET_CAPTURE)) {
+} elseif (preg_match('/^## \[Unreleased\]$/m', $changelog, $match, PREG_OFFSET_CAPTURE)) {
     $offset = $match[0][1];
     $changelog = substr_replace($changelog, $releaseHeading, $offset, strlen($match[0][0]));
 } else {
