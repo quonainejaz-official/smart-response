@@ -19,6 +19,9 @@ use Quonain\SmartResponse\Detectors\RequestTypeDetector;
 use Quonain\SmartResponse\Exceptions\Handler\SmartResponseExceptionHandler;
 use Quonain\SmartResponse\Formatters\JsonApiFormatter;
 use Quonain\SmartResponse\Formatters\XmlApiFormatter;
+use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
+use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
+use Quonain\SmartResponse\Formatters\SoapApiFormatter;
 use Quonain\SmartResponse\Http\Middleware\SmartResponseMiddleware;
 use Quonain\SmartResponse\Macros\ResponseMacros;
 use Quonain\SmartResponse\Services\SmartResponseManager;
@@ -84,11 +87,21 @@ final class SmartResponseServiceProvider extends ServiceProvider
             return new XmlApiFormatter($app['config']->get('smart-response', []));
         });
 
+        $this->app->singleton(LegacyApiFormatter::class, function ($app) {
+            return new LegacyApiFormatter($app['config']->get('smart-response', []));
+        });
+
+        $this->app->singleton(GraphQLApiFormatter::class);
+        $this->app->singleton(SoapApiFormatter::class);
+
         $this->app->singleton(ApiResponseBuilderInterface::class, ApiResponseBuilder::class);
         $this->app->singleton(ApiResponseBuilder::class, function ($app) {
             return new ApiResponseBuilder(
                 $app->make(JsonApiFormatter::class),
                 $app->make(XmlApiFormatter::class),
+                $app->make(LegacyApiFormatter::class),
+                $app->make(GraphQLApiFormatter::class),
+                $app->make(SoapApiFormatter::class),
                 $app['config']->get('smart-response', []),
             );
         });

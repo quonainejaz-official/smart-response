@@ -11,12 +11,18 @@ use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
 use Quonain\SmartResponse\DTO\SmartResponsePayload;
 use Quonain\SmartResponse\Formatters\JsonApiFormatter;
 use Quonain\SmartResponse\Formatters\XmlApiFormatter;
+use Quonain\SmartResponse\Formatters\LegacyApiFormatter;
+use Quonain\SmartResponse\Formatters\GraphQLApiFormatter;
+use Quonain\SmartResponse\Formatters\SoapApiFormatter;
 
 final class ApiResponseBuilder implements ApiResponseBuilderInterface
 {
     public function __construct(
         private readonly JsonApiFormatter $jsonFormatter,
         private readonly XmlApiFormatter $xmlFormatter,
+        private readonly LegacyApiFormatter $legacyFormatter,
+        private readonly GraphQLApiFormatter $graphqlFormatter,
+        private readonly SoapApiFormatter $soapFormatter,
         private readonly array $config,
     ) {}
 
@@ -41,6 +47,9 @@ final class ApiResponseBuilder implements ApiResponseBuilderInterface
 
         return match ($format) {
             'xml' => $this->xmlFormatter,
+            'legacy' => $this->legacyFormatter,
+            'graphql' => $this->graphqlFormatter,
+            'soap' => $this->soapFormatter,
             default => $this->jsonFormatter,
         };
     }
