@@ -139,6 +139,53 @@ class UserController extends Controller
 }
 ```
 
+### Legacy API responses
+
+Existing clients can opt into a legacy envelope per response by setting
+`format: 'legacy'`. The modern envelope remains the default.
+
+```php
+return $this->smartResponse(
+    request: $request,
+    data: $user,
+    message: 'User loaded',
+    format: 'legacy',
+);
+```
+
+The default legacy shape is `status`, `message`, `data`, and `errors`. To match
+an existing contract, publish the config and change `smart-response.legacy.keys`.
+
+### Protocol engines
+
+The same payload can be selected for additional API protocols:
+
+```php
+return $this->smartResponse(request: $request, data: $user, format: 'graphql');
+return $this->smartResponse(request: $request, data: $user, format: 'soap');
+```
+
+`graphql` returns the standard GraphQL `{ data, errors }` envelope.
+`soap` returns a SOAP 1.1 XML envelope. Both are opt-in and preserve the
+existing JSON default.
+
+For transports that are not ordinary HTTP responses, use the built-in
+transport-neutral value objects and pass them to your chosen runtime:
+
+```php
+$grpc = new \Quonain\SmartResponse\Support\GrpcResponse(data: $user, message: 'Loaded');
+$socket = new \Quonain\SmartResponse\Support\WebSocketMessage(data: $user, event: 'user.loaded');
+$webhook = \Quonain\SmartResponse\Support\WebhookPayload::create(
+    event: 'user.created', data: $user, secret: config('services.partner.secret'),
+);
+```
+
+`GrpcResponse::toArray()` is ready for a protobuf/gRPC adapter, while
+`WebSocketMessage::encode()` can be sent through Reverb, Echo, or another
+WebSocket server. `WebhookPayload` creates a JSON-safe event body and an
+optional HMAC-SHA256 signature. The library does not force a specific gRPC,
+WebSocket, or HTTP client dependency on applications.
+
 ---
 
 ## How API vs Web is detected
