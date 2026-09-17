@@ -76,11 +76,48 @@ final class RequestTypeDetector implements RequestDetectorInterface
 
     public function getPreferredFormat(Request $request): string
     {
+        $supported = $this->config['detection']['format_route_suffixes'] ?? [];
+        $default = $this->config['default_format'] ?? 'json';
+
+        $explicit = strtolower((string) $request->header(
+            $this->config['detection']['format_header'] ?? 'X-Smart-Response-Format',
+            ''
+        ));
+
+        if ($this->isSupportedFormat($explicit, $supported)) {
+            return $explicit;
+        }
+
+        $queryParameter = $this->config['detection']['format_query_parameter'] ?? 'format';
+        $query = strtolower((string) $request->query($queryParameter, ''));
+
+        if ($this->isSupportedFormat($query, $supported)) {
+            return $query;
+        }
+
+        $suffix = strtolower((string) $request->route('format', ''));
+
+        if ($this->isSupportedFormat($suffix, $supported)) {
+            return $suffix;
+        }
+
+        $path = trim($request->path(), '/');
+
+        foreach ($supported as $format) {
+            if (str_ends_with($path, '.'.$format)) {
+                return $format;
+            }
+        }
+
         if ($this->expectsXml($request)) {
             return 'xml';
         }
 
-        return $this->config['default_format'] ?? 'json';
+        if ($this->acceptsGraphql($request)) {
+            return 'graphql';
+        }
+
+        return $default;
     }
 
     private function isApiRoute(Request $request): bool
@@ -111,5 +148,22 @@ final class RequestTypeDetector implements RequestDetectorInterface
         }
 
         return false;
+    }
+
+    private function acceptsGraphql(Request $request): bool
+    {
+        if (! ($this->config['graphql']['enabled'] ?? false)) {
+            return false;
+        }
+
+        $graphqlAccept = $this->config['graphql']['accept'] ?? '';
+
+        return $graphqlAccept !== ''
+            && str_contains(strtolower($request->header('Accept', '')), strtolower($graphqlAccept));
+    }
+
+    private function isSupportedFormat(string $format, array $supported): bool
+    {
+        return $format !== '' && in_array($format, $supported, true);
     }
 }

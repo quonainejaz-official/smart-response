@@ -27,6 +27,9 @@ return [
         'xml_accept' => ['application/xml', 'text/xml'],
         'api_route_prefixes' => ['api'],
         'api_route_patterns' => ['api/*'],
+        'format_header' => 'X-Smart-Response-Format',
+        'format_query_parameter' => 'format',
+        'format_route_suffixes' => ['json', 'xml', 'legacy', 'graphql', 'soap'],
         'bearer_as_api' => true,
     ],
 
