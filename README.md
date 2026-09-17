@@ -502,6 +502,12 @@ composer install
 composer test
 ```
 
+Check the local runtime before enabling optional protocol integrations:
+
+```bash
+php artisan smart-response:doctor
+```
+
 ---
 
 ## Package structure

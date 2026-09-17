@@ -56,7 +56,8 @@ Acceptance: one controller response can select a configured format from an expli
 
 ### Phase 5: Platform operations
 
-- [ ] Artisan install, doctor, adapter, profile, and protocol generation commands.
+- [x] Artisan doctor command for PHP extensions, configured adapters, and protocol readiness.
+- [ ] Artisan install, adapter, profile, and protocol generation commands.
 - [ ] Structured logs, metrics, OpenTelemetry hooks, and Laravel observability support.
 - [ ] Security hardening, rate limits, replay protection, and payload limits.
 - [ ] Streaming, caching, benchmarks, and large-payload safeguards.

@@ -32,6 +32,7 @@ use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\RateLimitResponse;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
+use Quonain\SmartResponse\Console\Commands\SmartResponseDoctorCommand;
 
 final class SmartResponseServiceProvider extends ServiceProvider
 {
@@ -45,6 +46,10 @@ final class SmartResponseServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                SmartResponseDoctorCommand::class,
+            ]);
+
             $this->publishes([
                 __DIR__.'/../config/smart-response.php' => config_path('smart-response.php'),
             ], 'smart-response-config');
