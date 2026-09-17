@@ -184,3 +184,19 @@ it('auto-caches get api responses when cache is enabled', function () {
     expect($firstJson['data'])->toBe(['cached' => 1])
         ->and($secondJson['data'])->toBe(['cached' => 1]);
 });
+
+it('supports the fluent builder and named response profiles', function () {
+    $request = Request::create('/users', 'GET', [], [], [], [
+        'HTTP_ACCEPT' => 'application/json',
+    ]);
+
+    $response = app(SmartResponseManagerInterface::class)
+        ->make(['id' => 1])
+        ->request($request)
+        ->profile('legacy-v1')
+        ->message('Loaded')
+        ->send();
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(json_decode($response->getContent(), true))->toHaveKeys(['status', 'message', 'data', 'errors']);
+});
