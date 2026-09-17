@@ -21,11 +21,12 @@ The package must reduce duplicate controllers, response workarounds, protocol-sp
 
 - [x] Central response manager and immutable payload.
 - [x] JSON, XML, legacy, GraphQL, SOAP, Blade, and Inertia foundations.
-- [ ] Define a stable adapter contract for all protocols.
-- [ ] Add deterministic format negotiation precedence.
-- [ ] Add explicit format header, query, route suffix, and profile selection.
-- [ ] Add named response profiles with validation.
-- [ ] Add a fluent response builder without breaking existing helpers.
+- [x] Define a stable adapter contract for all protocols.
+- [x] Add deterministic format negotiation precedence.
+- [x] Add explicit format header, query, route suffix, and profile selection.
+- [x] Add named response profiles with validation.
+- [x] Add a fluent response builder without breaking existing helpers.
+- [x] Add a registry for application-defined response formatters.
 - [ ] Add unsupported-format and fallback policies.
 
 Acceptance: one controller response can select a configured format from an explicit option, request metadata, or default policy, with tests covering precedence and fallback.

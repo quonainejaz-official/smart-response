@@ -183,7 +183,8 @@ $webhook = \Quonain\SmartResponse\Support\WebhookPayload::create(
 `GrpcResponse::toArray()` is ready for a protobuf/gRPC adapter, while
 `WebSocketMessage::encode()` can be sent through Reverb, Echo, or another
 WebSocket server. `WebhookPayload` creates a JSON-safe event body and an
-optional HMAC-SHA256 signature. The library does not force a specific gRPC,
+optional HMAC-SHA256 signature. Receivers can validate it with
+`WebhookPayload::verify($payload, $secret, $payload['signature'])`. The library does not force a specific gRPC,
 WebSocket, or HTTP client dependency on applications.
 
 ### Fluent response builder and profiles

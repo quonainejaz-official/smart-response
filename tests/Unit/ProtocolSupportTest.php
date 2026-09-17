@@ -34,7 +34,8 @@ it('provides transport-neutral grpc, websocket, and webhook payloads', function 
 
     expect($grpc->toArray()['data'])->toBe(['id' => 1])
         ->and(json_decode($socket->encode(), true)['event'])->toBe('user.loaded')
-        ->and($webhook)->toHaveKey('signature');
+        ->and($webhook)->toHaveKey('signature')
+        ->and(WebhookPayload::verify($webhook, 'secret', $webhook['signature']))->toBeTrue();
 });
 
 it('allows applications to register custom response formatters', function () {
