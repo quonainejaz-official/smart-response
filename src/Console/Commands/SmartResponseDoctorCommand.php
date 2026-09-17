@@ -23,7 +23,7 @@ final class SmartResponseDoctorCommand extends Command
         $this->check('XML extension', extension_loaded('xml'));
         $this->check('SOAP extension', extension_loaded('soap'), true);
         $this->check('gRPC extension', extension_loaded('grpc'), true);
-        $this->check('Configured formatters', $registry->formats() !== false);
+        $this->check('Configured formatters', $registry->formats() !== []);
 
         $this->line('Formats: '.implode(', ', $registry->formats()));
         $this->line('SOAP and gRPC are optional runtime capabilities; the core adapters remain installable without them.');

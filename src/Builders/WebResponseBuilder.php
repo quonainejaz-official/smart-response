@@ -16,6 +16,7 @@ final class WebResponseBuilder implements WebResponseBuilderInterface
     public function __construct(
         private readonly UrlGenerator $url,
         private readonly InertiaAdapter $inertiaAdapter,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 

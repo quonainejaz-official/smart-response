@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Quonain\SmartResponse\Support;
 
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final class PaginationTransformer
 {
@@ -58,9 +56,10 @@ final class PaginationTransformer
     }
 
     /**
+     * @param AbstractPaginator<int, mixed> $paginator
      * @return array<string, mixed>
      */
-    private function metaFromPaginator(Paginator|LengthAwarePaginator $paginator): array
+    private function metaFromPaginator(AbstractPaginator $paginator): array
     {
         $meta = [
             'current_page' => $paginator->currentPage(),
@@ -79,16 +78,17 @@ final class PaginationTransformer
     }
 
     /**
+     * @param AbstractCursorPaginator<int, mixed> $paginator
      * @return array<string, mixed>
      */
-    private function metaFromCursorPaginator(CursorPaginator $paginator): array
+    private function metaFromCursorPaginator(AbstractCursorPaginator $paginator): array
     {
         return array_filter([
             'per_page' => $paginator->perPage(),
             'path' => $paginator->path(),
             'next_cursor' => $paginator->nextCursor()?->encode(),
             'prev_cursor' => $paginator->previousCursor()?->encode(),
-            'has_more' => $paginator->hasMorePages(),
+            'has_more' => $paginator->nextCursor() !== null,
         ], static fn ($value) => $value !== null);
     }
 }

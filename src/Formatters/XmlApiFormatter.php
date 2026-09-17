@@ -12,6 +12,7 @@ use Quonain\SmartResponse\DTO\SmartResponsePayload;
 final class XmlApiFormatter implements ResponseFormatterInterface
 {
     public function __construct(
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 

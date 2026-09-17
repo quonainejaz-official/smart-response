@@ -7,6 +7,10 @@ namespace Quonain\SmartResponse\Support;
 /** Creates signed webhook bodies without coupling the package to a HTTP client. */
 final class WebhookPayload
 {
+    /**
+     * @param array<string, mixed> $meta
+     * @return array<string, mixed>
+     */
     public static function create(string $event, mixed $data = null, array $meta = [], ?string $secret = null): array
     {
         $body = ['event' => $event, 'data' => $data, 'meta' => $meta, 'timestamp' => time()];
@@ -25,6 +29,7 @@ final class WebhookPayload
      * The payload is encoded with the same JSON options used for signing so
      * receivers can validate the body without a framework-specific client.
      */
+    /** @param array<string, mixed> $payload */
     public static function verify(array $payload, string $secret, string $signature): bool
     {
         $provided = strtolower(trim($signature));
@@ -38,6 +43,10 @@ final class WebhookPayload
     }
 
     /** @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
     private static function withoutSignature(array $payload): array
     {
         unset($payload['signature']);

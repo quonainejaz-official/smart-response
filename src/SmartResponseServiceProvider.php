@@ -6,7 +6,7 @@ namespace Quonain\SmartResponse;
 
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Routing\Registrar;
+use Illuminate\Routing\Router;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Support\ServiceProvider;
 use Quonain\SmartResponse\Builders\ApiResponseBuilder;
@@ -114,11 +114,6 @@ final class SmartResponseServiceProvider extends ServiceProvider
         $this->app->singleton(ApiResponseBuilderInterface::class, ApiResponseBuilder::class);
         $this->app->singleton(ApiResponseBuilder::class, function ($app) {
             return new ApiResponseBuilder(
-                $app->make(JsonApiFormatter::class),
-                $app->make(XmlApiFormatter::class),
-                $app->make(LegacyApiFormatter::class),
-                $app->make(GraphQLApiFormatter::class),
-                $app->make(SoapApiFormatter::class),
                 $app->make(ResponseFormatterRegistry::class),
                 $app['config']->get('smart-response', []),
             );
@@ -179,7 +174,7 @@ final class SmartResponseServiceProvider extends ServiceProvider
             return;
         }
 
-        $router = $this->app->make(Registrar::class);
+        $router = $this->app->make(Router::class);
         $alias = $config['alias'] ?? 'smart.response';
 
         $router->aliasMiddleware($alias, SmartResponseMiddleware::class);

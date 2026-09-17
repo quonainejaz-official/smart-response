@@ -15,6 +15,7 @@ final class SmartResponsePayload
 {
     /**
      * @param  array<string, mixed>|null  $viewData
+     * @param  array<string, mixed>  $routeParameters
      * @param  array<string, mixed>  $meta
      * @param  array<string, mixed>|null  $headers
      */
@@ -57,6 +58,12 @@ final class SmartResponsePayload
         return $this->replicate(meta: array_merge($this->meta, $meta));
     }
 
+    /**
+     * @param array<string, mixed>|null $viewData
+     * @param array<string, mixed>|null $routeParameters
+     * @param array<string, mixed>|null $meta
+     * @param array<string, string|list<string>>|null $headers
+     */
     public function replicate(
         ?Request $request = null,
         mixed $data = null,

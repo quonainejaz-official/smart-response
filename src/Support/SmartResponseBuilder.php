@@ -29,10 +29,14 @@ final class SmartResponseBuilder
     public function format(?string $format): self { return $this->change(format: $format); }
     public function profile(?string $profile): self { return $this->change(profile: $profile); }
     public function view(?string $view): self { return $this->change(view: $view); }
+    /** @param array<string, mixed>|null $viewData */
     public function viewData(?array $viewData): self { return $this->change(viewData: $viewData); }
+    /** @param array<string, mixed> $meta */
     public function meta(array $meta): self { return $this->change(meta: array_merge($this->payload->meta, $meta)); }
+    /** @param array<string, string|list<string>> $headers */
     public function headers(array $headers): self { return $this->change(headers: $headers); }
     public function redirect(?string $url): self { return $this->change(redirect: $url); }
+    /** @param array<string, mixed> $parameters */
     public function route(?string $route, array $parameters = []): self { return $this->change(route: $route, routeParameters: $parameters); }
     public function success(bool $success = true): self { return $this->change(success: $success); }
     public function send(?Request $request = null): Response { return $this->manager->respond($this->payload, $request); }

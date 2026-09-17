@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Quonain\SmartResponse\Builders;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Quonain\SmartResponse\Contracts\ApiResponseBuilderInterface;
 use Quonain\SmartResponse\Contracts\ResponseFormatterInterface;
 use Quonain\SmartResponse\DTO\SmartResponsePayload;
@@ -19,26 +19,22 @@ use Quonain\SmartResponse\Support\ResponseFormatterRegistry;
 final class ApiResponseBuilder implements ApiResponseBuilderInterface
 {
     public function __construct(
-        private readonly JsonApiFormatter $jsonFormatter,
-        private readonly XmlApiFormatter $xmlFormatter,
-        private readonly LegacyApiFormatter $legacyFormatter,
-        private readonly GraphQLApiFormatter $graphqlFormatter,
-        private readonly SoapApiFormatter $soapFormatter,
         private readonly ResponseFormatterRegistry $registry,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
-    public function success(SmartResponsePayload $payload): JsonResponse|Response
+    public function success(SmartResponsePayload $payload): JsonResponse|BaseResponse
     {
         return $this->formatter($payload)->format($payload);
     }
 
-    public function error(SmartResponsePayload $payload): JsonResponse|Response
+    public function error(SmartResponsePayload $payload): JsonResponse|BaseResponse
     {
         return $this->formatter($payload)->format($payload);
     }
 
-    public function validationError(SmartResponsePayload $payload): JsonResponse|Response
+    public function validationError(SmartResponsePayload $payload): JsonResponse|BaseResponse
     {
         return $this->formatter($payload)->format($payload);
     }
@@ -51,6 +47,6 @@ final class ApiResponseBuilder implements ApiResponseBuilderInterface
             return $this->registry->get($format);
         }
 
-        return $this->jsonFormatter;
+        return $this->registry->get('json');
     }
 }

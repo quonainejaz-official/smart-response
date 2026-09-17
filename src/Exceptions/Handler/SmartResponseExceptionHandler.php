@@ -24,6 +24,7 @@ final class SmartResponseExceptionHandler
     public function __construct(
         private readonly SmartResponseManagerInterface $manager,
         private readonly RequestDetectorInterface $detector,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 

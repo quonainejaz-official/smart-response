@@ -11,6 +11,7 @@ final class RateLimitResponse
 {
     public function __construct(
         private readonly SmartResponseManagerInterface $manager,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 

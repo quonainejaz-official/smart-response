@@ -10,6 +10,7 @@ use Quonain\SmartResponse\Contracts\RequestDetectorInterface;
 final class RequestTypeDetector implements RequestDetectorInterface
 {
     public function __construct(
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
@@ -191,6 +192,7 @@ final class RequestTypeDetector implements RequestDetectorInterface
         return false;
     }
 
+    /** @param list<string> $supported */
     private function isSupportedFormat(string $format, array $supported): bool
     {
         return $format !== '' && in_array($format, $supported, true);

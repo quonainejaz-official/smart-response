@@ -15,6 +15,7 @@ interface SmartResponseManagerInterface
 
     public function make(mixed $data = null): SmartResponseBuilder;
 
+    /** @param array<string, mixed> $meta */
     public function success(
         mixed $data = null,
         ?string $message = null,
@@ -22,6 +23,7 @@ interface SmartResponseManagerInterface
         int $status = 200,
     ): Response;
 
+    /** @param array<string, mixed> $meta */
     public function error(
         ?string $message = null,
         mixed $errors = null,
@@ -35,6 +37,7 @@ interface SmartResponseManagerInterface
         int $status = 422,
     ): Response;
 
+    /** @param array<string, mixed> $meta */
     public function created(
         mixed $data = null,
         ?string $message = null,

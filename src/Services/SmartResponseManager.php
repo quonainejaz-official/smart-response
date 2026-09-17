@@ -34,6 +34,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         private readonly MetaEnricher $metaEnricher,
         private readonly ?CacheRepository $cache,
         private readonly ?Dispatcher $events,
+        /** @var array<string, mixed> */
         private readonly array $config,
     ) {}
 
@@ -76,6 +77,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         return new SmartResponseBuilder($this, $data);
     }
 
+    /** @param array<string, mixed> $meta */
     public function success(
         mixed $data = null,
         ?string $message = null,
@@ -91,6 +93,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         ));
     }
 
+    /** @param array<string, mixed> $meta */
     public function error(
         ?string $message = null,
         mixed $errors = null,
@@ -117,10 +120,11 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             message: $message ?? 'Validation failed',
             success: false,
             errors: $formatted,
-            status: $status ?? (int) ($this->config['status_codes']['validation_error'] ?? 422),
+            status: $status,
         ));
     }
 
+    /** @param array<string, mixed> $meta */
     public function created(
         mixed $data = null,
         ?string $message = null,
@@ -140,7 +144,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
         $request = request();
 
-        if ($request !== null && $this->detector->expectsApi($request)) {
+        if ($this->detector->expectsApi($request)) {
             return new Response('', $status, ['Content-Type' => 'application/json']);
         }
 
