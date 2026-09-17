@@ -155,6 +155,11 @@ return [
         'ttl' => 60,
         'store' => null,
         'prefix' => 'smart_response',
+        // Never cache user-specific responses unless the application explicitly
+        // enables it and supplies a safe cache key.
+        'cache_authenticated' => false,
+        'vary_headers' => ['Accept'],
+        'cacheable_statuses' => [200],
     ],
 
     /*
@@ -163,9 +168,33 @@ return [
     |--------------------------------------------------------------------------
     */
     'rate_limit' => [
+        'enabled' => false,
         'message' => 'Too many requests. Please try again later.',
         'status' => 429,
         'retry_after_seconds' => 60,
+        'max_attempts' => 60,
+        'decay_seconds' => 60,
+        'prefix' => 'smart_response:rate_limit',
+        // Supported values: user_or_ip, ip, route.
+        'key' => 'user_or_ip',
+        'store' => null,
+    ],
+
+    /* Reject declared oversized requests before controller work begins. */
+    'payload_limits' => [
+        'enabled' => false,
+        'max_bytes' => 1048576,
+        'status' => 413,
+    ],
+
+    /* Existing headers are never overwritten. Enable only after reviewing CSP. */
+    'security_headers' => [
+        'enabled' => false,
+        'headers' => [
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ],
     ],
 
     /*

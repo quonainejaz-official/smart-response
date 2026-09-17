@@ -21,6 +21,7 @@ use Quonain\SmartResponse\Support\MetaEnricher;
 use Quonain\SmartResponse\Support\PaginationTransformer;
 use Quonain\SmartResponse\Support\ValidationErrorFormatter;
 use Quonain\SmartResponse\Support\SmartResponseBuilder;
+use Quonain\SmartResponse\Support\CachedResponse;
 
 final class SmartResponseManager implements SmartResponseManagerInterface
 {
@@ -291,8 +292,27 @@ final class SmartResponseManager implements SmartResponseManagerInterface
             return false;
         }
 
-        return ($this->config['cache']['enabled'] ?? false)
-            && $this->cache !== null;
+        if (! ($this->config['cache']['enabled'] ?? false) || $this->cache === null) {
+            return false;
+        }
+
+        if ($this->hasDynamicMeta()) {
+            return false;
+        }
+
+        if ($payload->success !== true || ! in_array($payload->status, $this->cacheableStatuses(), true)) {
+            return false;
+        }
+
+        // A response that identifies a user is private by default. Developers
+        // must make the deliberate opt-in and provide an isolated cache key.
+        if ($request->user() !== null || $request->bearerToken() !== null) {
+            if (! ($this->config['cache']['cache_authenticated'] ?? false) || $payload->cacheKey === null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function getCachedResponse(SmartResponsePayload $payload): ?Response
@@ -305,7 +325,7 @@ final class SmartResponseManager implements SmartResponseManagerInterface
 
         $cached = $this->cache->get($key);
 
-        return $cached instanceof Response ? $cached : null;
+        return $cached instanceof CachedResponse ? $cached->toResponse() : null;
     }
 
     private function storeCachedResponse(SmartResponsePayload $payload, Response $response): void
@@ -321,7 +341,11 @@ final class SmartResponseManager implements SmartResponseManagerInterface
         }
 
         $ttl = $payload->cacheTtl ?? (int) ($this->config['cache']['ttl'] ?? 60);
-        $this->cache->put($key, $response, $ttl);
+        if ($ttl <= 0) {
+            return;
+        }
+
+        $this->cache->put($key, CachedResponse::fromResponse($response), $ttl);
     }
 
     private function cacheKey(SmartResponsePayload $payload): ?string
@@ -336,10 +360,41 @@ final class SmartResponseManager implements SmartResponseManagerInterface
                 return null;
             }
 
-            $cacheKey = sha1($request->fullUrl().'|'.$request->header('Accept', ''));
+            $vary = [];
+            foreach (($this->config['cache']['vary_headers'] ?? ['Accept']) as $header) {
+                if (is_string($header)) {
+                    $vary[$header] = $request->header($header, '');
+                }
+            }
+
+            $cacheKey = hash('sha256', json_encode([
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+                'format' => $payload->format,
+                'vary' => $vary,
+            ], JSON_THROW_ON_ERROR));
         }
 
         return "{$prefix}:{$cacheKey}";
+    }
+
+    /** @return list<int> */
+    private function cacheableStatuses(): array
+    {
+        return array_values(array_filter(
+            $this->config['cache']['cacheable_statuses'] ?? [200],
+            static fn (mixed $status): bool => is_int($status),
+        ));
+    }
+
+    private function hasDynamicMeta(): bool
+    {
+        if (! ($this->config['meta']['enabled'] ?? true)) {
+            return false;
+        }
+
+        return ($this->config['meta']['include_timestamp'] ?? true)
+            || ($this->config['meta']['include_request_id'] ?? true);
     }
 
     private function logResponse(SmartResponsePayload $payload): void

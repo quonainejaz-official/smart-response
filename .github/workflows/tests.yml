@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         php: ['8.2', '8.3']
-        laravel: ['10.*', '11.*']
     steps:
       - uses: actions/checkout@v4
       - name: Setup PHP
@@ -24,3 +23,5 @@ jobs:
         run: composer install --prefer-dist --no-progress
       - name: Run tests
         run: composer test
+      - name: Static analysis
+        run: composer analyse

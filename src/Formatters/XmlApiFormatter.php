@@ -31,7 +31,7 @@ final class XmlApiFormatter implements ResponseFormatterInterface
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><response/>');
         $this->arrayToXml($structure, $xml);
 
-        return response($xml->asXML(), $payload->status, [
+        return new BaseResponse($xml->asXML(), $payload->status, [
             'Content-Type' => 'application/xml; charset=UTF-8',
             ...($payload->headers ?? []),
         ]);
@@ -46,7 +46,7 @@ final class XmlApiFormatter implements ResponseFormatterInterface
         }
 
         foreach ($data as $key => $value) {
-            $elementKey = is_numeric($key) ? 'item' : (string) $key;
+            $elementKey = is_numeric($key) ? 'item' : $this->safeElementName((string) $key);
 
             if (is_array($value)) {
                 $child = $xml->addChild($elementKey);
@@ -55,5 +55,19 @@ final class XmlApiFormatter implements ResponseFormatterInterface
                 $xml->addChild($elementKey, htmlspecialchars((string) $value));
             }
         }
+    }
+
+    private function safeElementName(string $name): string
+    {
+        // XML element names must be valid identifiers. This avoids malformed
+        // output when API data contains user-provided or arbitrary array keys.
+        $name = preg_replace('/[^A-Za-z0-9_.-]/', '-', $name) ?? '';
+        $name = trim($name, '.-');
+
+        if ($name === '' || ! ctype_alpha($name[0]) && $name[0] !== '_') {
+            return 'item';
+        }
+
+        return $name;
     }
 }

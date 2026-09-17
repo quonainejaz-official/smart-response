@@ -4,7 +4,51 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a Laravel response layer for applications that serve more than one client. You write the business logic once, return one SmartResponse payload, and select the output required by the request: REST JSON, a legacy JSON contract, XML, SOAP, GraphQL, Blade, Inertia, WebSocket, gRPC host output, or webhook payloads.
+**SmartResponse** is a framework-agnostic PHP response core with a full Laravel integration. Plain PHP and CodeIgniter applications can use the zero-dependency core; Laravel applications retain the complete response pipeline: REST JSON, legacy JSON, XML, SOAP, GraphQL, Blade, Inertia, WebSocket, gRPC host output, and webhook payloads.
+
+Current release line: `1.2.0` (see `Quonain\\SmartResponse\\Core\\Version::CURRENT`).
+
+Releases are automated from GitHub Actions: run the **Release** workflow, enter a semantic version and release note, and it updates the changelog/version constant, runs tests and PHPStan, commits, and creates the matching `vX.Y.Z` tag. Locally, the same preparation is available with `composer release -- 1.2.1 "Release note"`.
+
+## Any PHP framework or plain PHP
+
+The core has no framework dependency. It returns an immutable response value that your framework can emit with its own response object:
+
+```php
+use Quonain\SmartResponse\Core\ArrayCacheStore;
+use Quonain\SmartResponse\Core\FixedWindowRateLimiter;
+use Quonain\SmartResponse\Core\SmartResponse;
+
+$responses = new SmartResponse();
+$limiter = new FixedWindowRateLimiter(new ArrayCacheStore());
+$limit = $limiter->attempt('user-or-ip:'.$identity, limit: 60, decaySeconds: 60);
+
+$response = $limit['allowed']
+    ? $responses->success(['id' => 1], 'User loaded')
+    : $responses->rateLimited(retryAfter: $limit['retry_after']);
+
+http_response_code($response->status());
+foreach ($response->headers() as $name => $value) {
+    header("{$name}: {$value}");
+}
+echo $response->content();
+```
+
+For CodeIgniter 4, pass `status()`, `headers()`, and `body()` to its response service:
+
+```php
+$result = (new \Quonain\SmartResponse\Core\SmartResponse())
+    ->success(['id' => 1], 'User loaded');
+
+$response = $this->response->setStatusCode($result->status());
+foreach ($result->headers() as $name => $value) {
+    $response->setHeader($name, $value);
+}
+
+return $response->setJSON($result->body());
+```
+
+The core also supports legacy JSON (`legacy()`), GraphQL JSON (`graphQl()`), XML (`xml()`), and standardized rate-limit output. Framework-owned concerns—views, redirects, sessions, queues, and server runtimes—remain adapter responsibilities. For production rate limits, implement `Core\\CacheStore` with your framework's shared atomic cache (for example Redis); `ArrayCacheStore` is process-local only.
 
 ## Read this before using SmartResponse
 
@@ -41,6 +85,43 @@ The default API contract is:
 ```
 
 You can preserve an existing legacy contract with a profile or an explicit `legacy` format. You can add a custom formatter when your application needs another envelope. You do not need a second controller for each response shape.
+
+## Production safeguards
+
+The `smart.response` middleware is the package's opt-in protection boundary. It can apply a cache-backed fixed-window rate limit, reject oversized declared request bodies, and add conservative response headers without overwriting headers set by your application. Enable only the safeguards your application needs:
+
+```php
+// config/smart-response.php
+'cache' => [
+    'enabled' => true,
+    'ttl' => 60,
+    'store' => 'redis',
+    // Authenticated responses remain uncached unless explicitly opted in.
+],
+'meta' => [
+    'include_timestamp' => false,
+    'include_request_id' => false,
+],
+'rate_limit' => [
+    'enabled' => true,
+    'max_attempts' => 120,
+    'decay_seconds' => 60,
+    'store' => 'redis',
+    'key' => 'user_or_ip',
+],
+'payload_limits' => ['enabled' => true, 'max_bytes' => 1_048_576],
+'security_headers' => ['enabled' => true],
+```
+
+Apply the middleware to the routes you want to protect:
+
+```php
+Route::middleware('smart.response')->group(function () {
+    Route::get('/api/users', UsersController::class);
+});
+```
+
+Cached responses are scalar snapshots, not framework response objects. Only successful configured-status `GET` API responses are cached; keys vary by URL, negotiated format, and `Accept` by default. Dynamic timestamp and request-ID metadata disables caching by default, so turn those values off for cacheable endpoints. Authenticated caching requires both an explicit opt-in and a per-user cache key. For distributed rate limiting, use an atomic shared store such as Redis rather than the array or file drivers.
 
 ### What the current release covers
 

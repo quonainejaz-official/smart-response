@@ -27,6 +27,16 @@ it('formats soap responses', function () {
         ->and($response->headers->get('Content-Type'))->toContain('text/xml');
 });
 
+it('creates valid XML for untrusted array keys', function () {
+    $formatter = new \Quonain\SmartResponse\Formatters\XmlApiFormatter([
+        'api' => ['success_key' => 'success', 'message_key' => 'message', 'data_key' => 'data', 'meta_key' => 'meta', 'errors_key' => 'errors'],
+    ]);
+
+    $response = $formatter->format(new SmartResponsePayload(data: ['<unsafe key>' => 'value']));
+
+    expect($response->getContent())->toContain('<unsafe-key>value</unsafe-key>');
+});
+
 it('provides transport-neutral grpc, websocket, and webhook payloads', function () {
     $grpc = new GrpcResponse(data: ['id' => 1]);
     $socket = new WebSocketMessage(data: ['id' => 1], event: 'user.loaded');
