@@ -2,3 +2,7 @@ parameters:
     level: 6
     paths:
         - src
+    stubFiles:
+        - C:/Users/Quonain/OneDrive/Documents/ChatGPT/smart-response/stubs/ratchet.php
+    scanFiles:
+        - C:/Users/Quonain/OneDrive/Documents/ChatGPT/smart-response/stubs/ratchet.php

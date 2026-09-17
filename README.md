@@ -180,12 +180,22 @@ $webhook = \Quonain\SmartResponse\Support\WebhookPayload::create(
 );
 ```
 
-`GrpcResponse::toArray()` is ready for a protobuf/gRPC adapter, while
-`WebSocketMessage::encode()` can be sent through Reverb, Echo, or another
-WebSocket server. `WebhookPayload` creates a JSON-safe event body and an
+`GrpcResponse::toArray()` is normalized by `Runtime\\Grpc\\GrpcHandler` for a
+real HTTP/2/protobuf host, while `WebSocketMessage::encode()` can be sent
+through the included Ratchet component or another WebSocket server.
+`WebhookPayload` creates a JSON-safe event body and an
 optional HMAC-SHA256 signature. Receivers can validate it with
 `WebhookPayload::verify($payload, $secret, $payload['signature'])`. The library does not force a specific gRPC,
 WebSocket, or HTTP client dependency on applications.
+
+### Runtime servers
+
+SOAP can be served through `Runtime\\Soap\\SoapServerAdapter` when the PHP
+SOAP extension is enabled. WebSocket applications can use
+`Runtime\\WebSocket\\SmartResponseWebSocketComponent` with a Ratchet runtime.
+For gRPC, PHP's official package provides clients rather than a native server;
+`Runtime\\Grpc\\GrpcHandler` is the application handler to mount in a real
+HTTP/2 host such as RoadRunner or FrankenPHP.
 
 ### Fluent response builder and profiles
 

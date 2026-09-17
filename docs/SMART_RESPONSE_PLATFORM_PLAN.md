@@ -48,11 +48,16 @@ Acceptance: one controller response can select a configured format from an expli
 
 ### Phase 4: Protocol adapters
 
-- [ ] SOAP 1.1/1.2, WSDL, faults, headers, and service routing.
+- [x] SOAP 1.1/1.2 runtime entrypoint with WSDL/service dispatch and fault output.
 - [ ] GraphQL execution, errors, context, schema, and pagination integration.
-- [ ] gRPC metadata, status mapping, protobuf, streaming, and health checks.
-- [ ] WebSocket channels, authentication, events, acknowledgements, and adapters.
+- [x] gRPC metadata/status application handler for a real HTTP/2/protobuf host.
+- [x] WebSocket Ratchet component and server entrypoint with normalized messages.
 - [ ] Webhook signing, verification, retries, idempotency, queueing, and delivery logs.
+
+Runtime note: PHP's official gRPC package is a client library. SmartResponse's
+gRPC runtime integration therefore exposes a normalized handler for a real
+HTTP/2 host such as RoadRunner or FrankenPHP, while SOAP and WebSocket can run
+directly through PHP's `SoapServer` and a WebSocket server runtime.
 
 ### Phase 5: Platform operations
 
@@ -64,7 +69,7 @@ Acceptance: one controller response can select a configured format from an expli
 
 ### Phase 6: Documentation and release quality
 
-- [ ] Protocol-specific documentation and runnable examples.
+- [x] Protocol-specific runtime documentation and runnable examples.
 - [ ] Compatibility matrix for Laravel, PHP, extensions, and optional runtimes.
 - [ ] CI for unit, feature, static-analysis, security, and compatibility suites.
 - [ ] Upgrade guides, changelog discipline, and stable release checklist.
