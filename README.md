@@ -662,6 +662,36 @@ OpenApiExample::successExample();
 OpenApiExample::errorExample();
 ```
 
+## Outbound API clients
+
+Configure providers in `config/smart-response.php` and use the same facade for outbound calls:
+
+```php
+'http' => ['providers' => [
+    'github' => [
+        'base_url' => env('GITHUB_API_URL', 'https://api.github.com'),
+        'auth' => ['type' => 'bearer', 'token' => env('GITHUB_TOKEN')],
+    ],
+]],
+```
+
+```php
+$response = SmartResponse::request('github')
+    ->get('/users')
+    ->query(['page' => 1])
+    ->headers(['Accept' => 'application/vnd.github+json'])
+    ->retry(3)
+    ->send();
+
+$users = $response->decoded();
+```
+
+The client supports GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD, JSON/form/multipart bodies, bearer/API-key/basic authentication, timeouts, retries with exponential backoff, response decoding, DTO mapping, host allow-lists, and response-size limits. Configure `http.max_response_bytes` and provider `allowed_hosts` for production deployments.
+
+## Structured response telemetry
+
+When `logging.enabled` is enabled, each response emits structured lifecycle fields including request/trace IDs, method, URL, negotiated format, status, duration, cache state and error code. Sensitive header names listed in `logging.redact` are never intended to be recorded by application hooks.
+
 ---
 
 ## Testing
@@ -742,33 +772,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT © [Quonain Ejaz](https://github.com/quonainejaz-official). See [LICENSE](LICENSE).
-
-## Outbound API clients
-
-Configure providers in `config/smart-response.php` and use the same facade for outbound calls:
-
-```php
-'http' => ['providers' => [
-    'github' => [
-        'base_url' => env('GITHUB_API_URL', 'https://api.github.com'),
-        'auth' => ['type' => 'bearer', 'token' => env('GITHUB_TOKEN')],
-    ],
-]],
-```
-
-```php
-$response = SmartResponse::request('github')
-    ->get('/users')
-    ->query(['page' => 1])
-    ->headers(['Accept' => 'application/vnd.github+json'])
-    ->retry(3)
-    ->send();
-
-$users = $response->decoded();
-```
-
-The client supports GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD, JSON/form/multipart bodies, bearer/API-key/basic authentication, timeouts, retries with exponential backoff, response decoding, DTO mapping, host allow-lists, and response-size limits. Configure `http.max_response_bytes` and provider `allowed_hosts` for production deployments.
-
-## Structured response telemetry
-
-When `logging.enabled` is enabled, each response emits structured lifecycle fields including request/trace IDs, method, URL, negotiated format, status, duration, cache state and error code. Sensitive header names listed in `logging.redact` are never intended to be recorded by application hooks.
