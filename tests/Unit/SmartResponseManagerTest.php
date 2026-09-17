@@ -32,6 +32,26 @@ it('returns json for api requests', function () {
         ->and($json['data'])->toBe(['id' => 1]);
 });
 
+it('returns the opt-in legacy api envelope', function () {
+    $request = Request::create('/api/users', 'GET', [], [], [], [
+        'HTTP_ACCEPT' => 'application/json',
+    ]);
+
+    $response = app(SmartResponseManagerInterface::class)->respond(new SmartResponsePayload(
+        request: $request,
+        data: ['id' => 1],
+        message: 'Loaded',
+        format: 'legacy',
+    ));
+
+    expect(json_decode($response->getContent(), true))->toMatchArray([
+        'status' => true,
+        'message' => 'Loaded',
+        'data' => ['id' => 1],
+        'errors' => null,
+    ]);
+});
+
 it('returns blade view for web requests', function () {
     $request = Request::create('/users', 'GET', [], [], [], [
         'HTTP_ACCEPT' => 'text/html',

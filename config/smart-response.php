@@ -49,9 +49,22 @@ return [
     |--------------------------------------------------------------------------
     | Response Formats
     |--------------------------------------------------------------------------
-    | Supported: json, xml
+    | Supported: json, xml, legacy, graphql, soap
     */
     'default_format' => 'json',
+
+    /*
+    | Legacy API response shape (selected with format: 'legacy').
+    | Set custom key names when integrating an existing API contract.
+    */
+    'legacy' => [
+        'keys' => [
+            'status' => 'status',
+            'message' => 'message',
+            'data' => 'data',
+            'errors' => 'errors',
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
