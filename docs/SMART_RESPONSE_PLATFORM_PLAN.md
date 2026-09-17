@@ -1,5 +1,8 @@
 # SmartResponse Platform Plan
 
+**Content type:** Conceptual plan<br>
+**Goal:** Define the response platform, its implementation boundaries, and the acceptance criteria for each phase.
+
 ## Product goal
 
 SmartResponse will be the unified response layer for Laravel and PHP applications. A developer should be able to keep one controller and one business logic path while SmartResponse produces the response required by the client: web, REST JSON, legacy JSON, XML, SOAP, GraphQL, gRPC, WebSocket, or webhook.
@@ -74,9 +77,11 @@ directly through PHP's `SoapServer` and a WebSocket server runtime.
 - [ ] CI for unit, feature, static-analysis, security, and compatibility suites.
 - [ ] Upgrade guides, changelog discipline, and stable release checklist.
 
-## Current implementation slice
+## Current implementation status
 
-The first implementation on `feat/improvements` adds deterministic request format negotiation. The precedence is:
+The current `feat/improvements` implementation includes the core response pipeline, deterministic format negotiation, named profiles, custom formatters, protocol value objects, the SOAP runtime adapter, the Ratchet WebSocket server entrypoint, and the gRPC application handler for an external HTTP/2/protobuf host.
+
+The format negotiation precedence is:
 
 1. Payload format explicitly supplied by the developer.
 2. `X-Smart-Response-Format` header.
@@ -86,6 +91,8 @@ The first implementation on `feat/improvements` adds deterministic request forma
 6. Configured default format.
 
 Only configured/supported formats are accepted. Invalid explicit values fall back to the configured default so existing applications do not fail unexpectedly.
+
+Read [features and scope](FEATURES_AND_SCOPE.md) for the complete public capability inventory. Read [runtime servers](runtime-servers.md) for SOAP, WebSocket, and gRPC integration examples.
 
 ## Definition of done for the platform
 

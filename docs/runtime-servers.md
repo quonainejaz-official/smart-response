@@ -1,5 +1,8 @@
 # Runtime servers
 
+**Content type:** How-to<br>
+**Goal:** Connect SmartResponse response logic to SOAP, WebSocket, or gRPC transport runtimes.
+
 SmartResponse keeps controller response logic independent from the transport. These runtime entrypoints connect that logic to real protocol servers.
 
 ## SOAP
@@ -15,11 +18,11 @@ $xml = $server->handle(file_get_contents('php://input') ?: null);
 return response($xml, 200)->header('Content-Type', 'text/xml; charset=utf-8');
 ```
 
-`SoapServerAdapter` uses PHP's native `SoapServer`, so WSDL dispatch and SOAP envelopes are handled by the PHP runtime.
+`SoapServerAdapter` uses [PHP's native `SoapServer`](https://www.php.net/class.soapserver.php), so WSDL dispatch and SOAP envelopes are handled by the PHP runtime.
 
 ## WebSocket
 
-Install a Ratchet version compatible with the application's Laravel and Symfony versions, then run the component:
+Install a [Ratchet](https://github.com/ratchetphp/Ratchet) version compatible with the application's Laravel and Symfony versions, then run the component:
 
 ```php
 use Quonain\SmartResponse\Runtime\WebSocket\WebSocketServer;
@@ -37,7 +40,7 @@ The component accepts JSON messages and sends normalized SmartResponse envelopes
 
 ## gRPC
 
-The official PHP gRPC package provides a client library; it does not provide a native PHP gRPC server. SmartResponse therefore supplies the application handler that a real HTTP/2/protobuf host mounts:
+The [official PHP gRPC package](https://grpc.io/docs/languages/php/quickstart/) provides a client library; it does not provide a native PHP gRPC server. SmartResponse therefore supplies the application handler that a real HTTP/2/protobuf host mounts:
 
 ```php
 use Quonain\SmartResponse\Runtime\Grpc\GrpcHandler;

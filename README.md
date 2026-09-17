@@ -4,13 +4,69 @@
 [![License](https://img.shields.io/packagist/l/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 [![PHP Version](https://img.shields.io/packagist/php-v/quonain/smart-response.svg)](https://packagist.org/packages/quonain/smart-response)
 
-**SmartResponse** is a unified Laravel response platform. Keep one controller and one business-logic path while it produces **REST JSON, legacy envelopes, XML, SOAP, GraphQL, Blade, or Inertia responses** from the same payload, with automatic request-type detection and explicit response profiles.
+**SmartResponse** is a Laravel response layer for applications that serve more than one client. You write the business logic once, return one SmartResponse payload, and select the output required by the request: REST JSON, a legacy JSON contract, XML, SOAP, GraphQL, Blade, Inertia, WebSocket, gRPC host output, or webhook payloads.
+
+## Read this before using SmartResponse
+
+SmartResponse solves response selection and response shape. It does not replace Laravel controllers, routing, authentication, validation, queues, database code, GraphQL schema execution, protobuf generation, or a protocol server runtime. Your controller still owns the business operation. SmartResponse owns the output contract around that operation.
+
+The intended migration looks like this:
+
+1. Keep the existing controller method and business logic.
+2. Replace repeated response construction with `smartResponse()` or the fluent builder.
+3. Let SmartResponse detect the request, or select a format or named profile explicitly.
+4. Keep the same payload while SmartResponse returns a web response, an API response, or a protocol-specific envelope.
+
+For example, the same controller can serve a Blade request and an API request:
+
+```php
+public function show(User $user)
+{
+    return smartResponse($user)
+        ->message('User loaded')
+        ->view('users.show');
+}
+```
+
+The default API contract is:
+
+```json
+{
+  "success": true,
+  "message": "User loaded",
+  "data": {"id": 123},
+  "meta": {"request_id": "…"},
+  "errors": null
+}
+```
+
+You can preserve an existing legacy contract with a profile or an explicit `legacy` format. You can add a custom formatter when your application needs another envelope. You do not need a second controller for each response shape.
+
+### What the current release covers
+
+| Surface | Current capability | Runtime requirement |
+| --- | --- | --- |
+| Laravel web | Blade views, redirects, flash messages, toast data, Inertia adapter | Laravel |
+| REST API | JSON envelope, status helpers, validation and exception output | Laravel |
+| Legacy API | Configurable legacy keys and named profiles | Laravel |
+| XML | Standardized XML envelope | Laravel |
+| GraphQL output | `{ data, errors }` response formatter | GraphQL execution server remains application-owned |
+| SOAP | SOAP formatter and native `SoapServer` adapter | PHP `soap` extension |
+| WebSocket | JSON message component and Ratchet server runner | Compatible Ratchet runtime |
+| gRPC | Metadata-aware normalized application handler | HTTP/2 and protobuf host such as RoadRunner or FrankenPHP |
+| Webhook | JSON-safe payload and HMAC signature verification | Delivery, retry, queue, and idempotency remain application-owned |
+
+The gRPC boundary is deliberate. The official PHP gRPC package supplies a client library, so SmartResponse does not claim to provide a native PHP gRPC server. It gives your selected HTTP/2 host the same normalized application response that the other adapters use.
+
+See the complete capability inventory and implementation boundaries in [features and scope](docs/FEATURES_AND_SCOPE.md). See transport setup in [runtime servers](docs/runtime-servers.md).
 
 ---
 
 ## Table of contents
 
 - [Features](#features)
+- [Read this before using SmartResponse](#read-this-before-using-smartresponse)
+- [Current release scope](#what-the-current-release-covers)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -34,17 +90,19 @@
 
 ## Features
 
-| Category | Capabilities |
-|----------|--------------|
-| **Detection** | `Accept` header, `expectsJson()`, `/api/*` routes, **Bearer tokens** (Sanctum / Passport) |
-| **API** | Standard JSON envelope, optional XML, validation errors, exception handler |
-| **Web** | Blade views, redirects, session flash, optional toast |
-| **Pagination** | Length-aware, simple, **cursor** paginators + API Resources |
-| **DX** | Trait, Facade, global helpers, `response()->smart*` macros |
-| **HTTP shortcuts** | `created`, `noContent`, `notFound`, `unauthorized`, `forbidden` |
-| **Meta** | Auto `timestamp`, `request_id`, optional `api_version` on API responses |
-| **Extras** | Inertia.js, Livewire, i18n, caching, logging, events, OpenAPI examples |
-| **Framework** | Laravel **10 · 11 · 12 · 13** · PHP **8.2+** |
+SmartResponse includes these features in the current codebase:
+
+- **Request detection**: `Accept` headers, JSON expectations, `/api/*` routes, Bearer tokens, explicit format headers, query parameters, route suffixes, and named profiles
+- **API formats**: JSON, XML, legacy JSON, GraphQL output, and SOAP XML
+- **Web responses**: Blade views, redirects, session flash messages, toast data, Inertia rendering, and Livewire flags
+- **One response API**: `HasSmartResponse`, `smartResponse()`, the `SmartResponse` facade, global helpers, response macros, and fluent builders
+- **HTTP shortcuts**: created, no content, not found, unauthorized, forbidden, validation error, and rate-limit responses
+- **Payload features**: pagination metadata, API resources and collections, custom headers, status codes, metadata, and request IDs
+- **Compatibility**: configurable legacy keys, named profiles, explicit format overrides, and backward-compatible JSON defaults
+- **Operations**: optional API caching, structured logging hooks, lifecycle events, localization, and the `smart-response:doctor` command
+- **Extension points**: response formatter registry, custom profiles, OpenAPI example payloads, and protocol-neutral transport value objects
+- **Runtime integrations**: native PHP SOAP server adapter, Ratchet WebSocket server component, and gRPC handler for an external HTTP/2/protobuf host
+- **Framework support**: Laravel 10, 11, 12, and 13 with PHP 8.2 or newer
 
 ---
 

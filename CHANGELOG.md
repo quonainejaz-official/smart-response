@@ -5,6 +5,19 @@ All notable changes to **SmartResponse** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- A complete feature and scope reference for the current response platform
+- A prominent README explanation of the one-controller response model and runtime boundaries
+- Documentation links for SOAP, WebSocket, gRPC, webhook, GraphQL, API, and web capabilities
+
+### Changed
+
+- Platform plan now reflects the implemented SOAP, WebSocket, and gRPC runtime slice
+- Runtime documentation declares prerequisites and application-owned responsibilities
+
 ## [1.1.1] - 2026-05-21
 
 ### Changed
